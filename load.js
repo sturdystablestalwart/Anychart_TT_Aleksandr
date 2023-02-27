@@ -1,53 +1,30 @@
 // Button listener and transformation section.
 $('#200001').click(function() {
     let self = this;
-    changeButton(self);
+    handleButtonClick(self);
 });
-function changeButton( el ) {
+function handleButtonClick( el ) {
     let sourceUrl = 'https://gist.githubusercontent.com/sturdystablestalwart/' +
         'c01e34d434af129e6f7e6ddfbf097926/raw/Data_for_the_TT.json'
     let urlFromInput = document.getElementById("100001").value
+    let isActive = true
     if (isValidUrl(urlFromInput)){sourceUrl = urlFromInput}
+
     if ( el.value === "Read Json and watch the source" ){
         el.value = "Stop polling"
         if (isValidUrl(urlFromInput)){
-            sourceUrl = urlFromInput
+            sourceUrl = urlFromInput;
         }
-        loadJson(sourceUrl);
-        pollServer(true, sourceUrl);
+        loadJson(isActive, sourceUrl);
     }
     else
         el.value = "Read Json and watch the source";
-        pollServer(false, sourceUrl);
+        isActive = false;
+        loadJson(isActive, sourceUrl);
 }
 
 // Loading section.
-function loadJson(sourceUrl) {
-    $.ajax({
-        url: sourceUrl,
-        dataType: 'json',
-        success: function(data) {
-            document.getElementById("000001").innerHTML = "The name field is " + data.name;
-            },
-        error: function(error) {
-            document.getElementById("000001").innerHTML =
-                "Error occurred while trying to load Json from the server " + error
-        }
-    });
-}
-
-// Url validator.
-function isValidUrl(string) {
-    try {
-        new URL(string);
-        return true;
-    } catch (err) {
-        return false;
-    }
-}
-
-//TODO https://learn.javascript.ru/long-polling
-function pollServer(isActive, sourceUrl)
+function loadJson(isActive, sourceUrl)
 {
     if (isActive)
     {
@@ -57,13 +34,26 @@ function pollServer(isActive, sourceUrl)
                 dataType: 'json',
                 success: function (data) {
                     document.getElementById("000001").innerHTML = "The name field is " + data.name;
-                    pollServer();
+                    loadJson(isActive, sourceUrl);
                 },
                 error: function (error) {
                     document.getElementById("000001").innerHTML =
                         "Error occurred while trying to load Json from the server " + error
-                    pollServer();
+                    loadJson(isActive, sourceUrl);
                 }});
         }, 30000);
     }
 }
+//TODO create a solution for initial timeout
+//TODO create a solution for stopping the polling
+
+// Url validator.
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
