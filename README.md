@@ -1,7 +1,7 @@
 # Anychart_TT_Aleksandr
 Test task for the AnyChart team and a pet project for me
 
-Descrition.
+Description.
 At its current stage, the app can take a default URL or a given one to send a GET request to load and parse data on the client's side.
 
 Stack.
