@@ -1,3 +1,8 @@
 body{
     font-family: Arial, serif;
 }
+
+html, body, #linechart{
+    height: 95%;
+    width: 99%;
+}
