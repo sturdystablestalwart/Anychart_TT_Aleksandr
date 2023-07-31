@@ -46,7 +46,8 @@ function loadJson(sourceUrl)
 }
 
 function pointsLimitationCalculation(pointsData){
-    let pointsAmount = pointsData.length - 1;// as the last one is an "end"
+    pointsData.pop();                    // The last one is the "end" of the data and isn't needed
+    let pointsAmount = pointsData.length;// TODO create a logick to deparate the ending data from the useable data
     let pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
         if (currentValue.value == undefined){
             return accumulator;
@@ -59,9 +60,9 @@ function pointsLimitationCalculation(pointsData){
         }
         return (accumulator <  currentValue.value) ? accumulator : currentValue.value;
     }, pointsData[0].value);
-    console.log(pointsAmount, pointsMaxHeight, pointsMinHeight);//debug
+    // console.log(pointsAmount, pointsMaxHeight, pointsMinHeight);//debug
     let pointsMeasurementsBundle = [pointsAmount, pointsMaxHeight, pointsMinHeight];
-    startCharting(pointsMeasurementsBundle);
+    startCharting(pointsMeasurementsBundle, pointsData);
 }
 // Url validator.
 function isValidUrl(string) {
