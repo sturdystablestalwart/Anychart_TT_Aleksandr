@@ -47,7 +47,7 @@ function loadJson(sourceUrl)
 
 function pointsLimitationCalculation(pointsData){
     pointsData.pop();                    // The last one is the "end" of the data and isn't needed
-    let pointsAmount = pointsData.length;// TODO create a logick to deparate the ending data from the useable data
+    let pointsAmount = pointsData.length;// TODO create a logick to departe the ending data from the useable data
     let pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
         if (currentValue.value == undefined){
             return accumulator;
