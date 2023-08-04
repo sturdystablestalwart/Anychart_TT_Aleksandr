@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.3.js"></script>
     <link rel="stylesheet" href="style.css" />
-    <title>TT</title>
+    <title>Line chart</title>
 </head>
 <body>
     <h1>Line chart</h1>
-    <label for="100001"></label><input type="url" id="100001" placeholder="https://gist.githubusercontent.com/sturdystablestalwart/c01e34d434af129e6f7e6ddfbf097926/raw/Data_for_the_TT.json"/>
-    <input type="button" value="Read Json and watch the source" id="200001">
-    <svg id="linechart"></svg>
+    <input id="sourceURL" type="url"  placeholder="https://gist.githubusercontent.com/sturdystablestalwart/c01e34d434af129e6f7e6ddfbf097926/raw/Data_for_the_TT.json"/>
+    <input id="button" type="button" value="Read Json and watch the source">
+    <svg id="linechart" display="none"></svg>
 </body>
 <script type="text/javascript" src="load.js"></script>
 <script type="text/javascript" src="chart.js"></script>

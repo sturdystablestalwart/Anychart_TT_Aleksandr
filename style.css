@@ -1,8 +1,4 @@
 body{
+    margin: 0;
     font-family: Arial, serif;
-}
-
-#linechart{
-    height: 600px;
-    width: 100%;
 }

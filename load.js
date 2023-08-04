@@ -1,17 +1,17 @@
 // Global variables section.
 let timer;
 
-// Button listener and transformation section.
-$('#200001').click(function() {
-    let self = this;
-    handleButtonClick(self);
+const button = document.getElementById('button');
+button.addEventListener('click', (event) =>{
+    handleButtonClick(event);
 });
-function handleButtonClick(el) {
+
+function handleButtonClick(event) {
     let sourceUrl = 'https://gist.githubusercontent.com/sturdystablestalwart/' +
         'c01e34d434af129e6f7e6ddfbf097926/raw/Data_for_the_TT.json';
-    let urlFromInput = document.getElementById("100001").value;
+    let urlFromInput = document.getElementById("sourceURL").value;
 
-    if ( el.value === "Read Json and watch the source" ){
+    if ( event.target.value === "Read Json and watch the source" ){
 
          if (isValidUrl(urlFromInput)){
             sourceUrl = urlFromInput;
@@ -19,36 +19,35 @@ function handleButtonClick(el) {
 
         loadJson(sourceUrl);
         timer = setInterval(loadJson, 30000, sourceUrl);
-        el.value = "Stop polling";
+        event.target.value = "Stop polling";
     }
     else
     {        
         clearInterval(timer);
-        el.value = "Read Json and watch the source";
+        event.target.value = "Read Json and watch the source";
     }
 }
 
 // Loading section.
-function loadJson(sourceUrl)
-{
-    $.ajax({
-        url: sourceUrl,
-        dataType: 'json',
-        success: function (data) {            
-            pointsMeasurementsBundleCalculation(data.data);
-        },
-        error: function (error) {
-            document.getElementById("000001").innerHTML =
-                "Error occurred while trying to load Json from the server " + error;
-        }
+function loadJson(sourceUrl) {
+    const Http = new XMLHttpRequest();
+    Http.open("GET", sourceUrl);
+    Http.send();
+    Http.addEventListener("error", (error) => {
+        document.getElementById("000001").innerHTML =
+        "Error occurred while trying to load Json from the server " + error;
+    });
+    Http.addEventListener("load", ()=>{
+        let data = JSON.parse(Http.responseText);
+        pointsMeasurementsBundleCalculation(data.data);
     });
 }
 
-function pointsMeasurementsBundleCalculation(pointsData){
-    pointsData.pop();                    // The last one is the "end" of the data and isn't needed
-    let pointsAmount = pointsData.length;// TODO create a logick to departe the ending data from the useable data
+function pointsMeasurementsBundleCalculation(pointsData) {
+    let pointsAmount = pointsData.length;
     let pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
         if (currentValue.value == undefined){
+            currentValue.value = null;
             return accumulator;
         }
         return (accumulator >  currentValue.value) ? accumulator : currentValue.value;
@@ -59,7 +58,6 @@ function pointsMeasurementsBundleCalculation(pointsData){
         }
         return (accumulator <  currentValue.value) ? accumulator : currentValue.value;
     }, pointsData[0].value);
-    // console.log(pointsAmount, pointsMaxHeight, pointsMinHeight);//debug
     let pointsMeasurementsBundle = [pointsAmount, pointsMaxHeight, pointsMinHeight];
     startCharting(pointsMeasurementsBundle, pointsData);
 }
