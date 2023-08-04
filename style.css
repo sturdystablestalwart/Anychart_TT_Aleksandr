@@ -1,13 +1,8 @@
 body{
     font-family: Arial, serif;
 }
-/* 
-html, body, #linechart{
-    
-} */
 
 #linechart{
     height: 600px;
     width: 100%;
-    border: 1px solid black;
 }

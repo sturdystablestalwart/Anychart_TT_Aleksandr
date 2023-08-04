@@ -1,7 +1,7 @@
-//kind of global variables that I didn't knew how to avoid
+// Global variables section.
 let timer;
 
-// Button listener and transformation section
+// Button listener and transformation section.
 $('#200001').click(function() {
     let self = this;
     handleButtonClick(self);
@@ -34,18 +34,17 @@ function loadJson(sourceUrl)
     $.ajax({
         url: sourceUrl,
         dataType: 'json',
-        success: function (data) {
-            document.getElementById("000001").innerHTML = "The name field is " + data.name;
-            pointsLimitationCalculation(data.data);
+        success: function (data) {            
+            pointsMeasurementsBundleCalculation(data.data);
         },
         error: function (error) {
             document.getElementById("000001").innerHTML =
-                "Error occurred while trying to load Json from the server " + error
+                "Error occurred while trying to load Json from the server " + error;
         }
     });
 }
 
-function pointsLimitationCalculation(pointsData){
+function pointsMeasurementsBundleCalculation(pointsData){
     pointsData.pop();                    // The last one is the "end" of the data and isn't needed
     let pointsAmount = pointsData.length;// TODO create a logick to departe the ending data from the useable data
     let pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
@@ -64,6 +63,7 @@ function pointsLimitationCalculation(pointsData){
     let pointsMeasurementsBundle = [pointsAmount, pointsMaxHeight, pointsMinHeight];
     startCharting(pointsMeasurementsBundle, pointsData);
 }
+
 // Url validator.
 function isValidUrl(string) {
     try {
