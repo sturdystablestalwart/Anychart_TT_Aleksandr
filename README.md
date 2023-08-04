@@ -1,11 +1,11 @@
 # Anychart_TT_Aleksandr
-Test task for the AnyChart team and a pet project for me
+This project serves as a test task assigned to me by the AnyChart Team and doubles as a personal pet project.
 
-Description.
-At its current stage, the app can take a default URL or a given one to send a GET request to load and parse data on the client's side.
+Description:
+The application is capable of fetching JSON data either from a default URL or a user-provided URL via an input field. Upon clicking the button, it initiates polling at 3000 ms intervals from the specified source. The JSON data is then parsed, and the SVG resized, with a tooltip being positioned accordingly. 
 
-Stack.
-I've used HTML, JS, and Jquery, as I'm familiar with these options.
+Stack:
+I've used HTML, JS. Fast and simple.
 
-How to set it up
+Set it up:
 Load the files and paste the HTML.
