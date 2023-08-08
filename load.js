@@ -58,7 +58,7 @@ function pointsMeasurementsBundleCalculation(pointsData) {
         }
         return (accumulator <  currentValue.value) ? accumulator : currentValue.value;
     }, pointsData[0].value);
-    let pointsMeasurementsBundle = [pointsAmount, pointsMaxHeight, pointsMinHeight];
+    let pointsMeasurementsBundle = {pointsAmount, pointsMaxHeight, pointsMinHeight};
     startCharting(pointsMeasurementsBundle, pointsData);
 }
 

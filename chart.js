@@ -1,7 +1,12 @@
 function startCharting(pointsMeasurementsBundle, pointsData){
+    
     const svg = document.getElementById('linechart');
+    const canvasParameters = findDimentions();
+    const pointCoordinatesBundle = calculatePointCoordinate(pointsData, canvasParameters, pointsMeasurementsBundle);
 
-    resizeSVG(svg);
+    const lineChartHieght = canvasParameters.lineChartHieght;
+    svg.setAttribute('style', `height: ${lineChartHieght}px; width: 100%;`);
+    svg.setAttribute('display', `flex`);
 
     const tooltip = document.getElementById('tooltip');
 
@@ -15,30 +20,67 @@ function startCharting(pointsMeasurementsBundle, pointsData){
         }
     }
 
-    const canvasParameters = findDimentions(svg);
     initiateTooltip(pointsData, canvasParameters, pointsMeasurementsBundle, svg);
-    drawMainLine(pointsData, canvasParameters, pointsMeasurementsBundle, svg);
+    drawMainLine(pointCoordinatesBundle, svg);
     drawYAxes(canvasParameters, pointsMeasurementsBundle, svg);
-    drawXAxes(pointsData, canvasParameters, pointsMeasurementsBundle, svg);    
+    drawXAxes(pointsData, canvasParameters, pointsMeasurementsBundle.pointsAmount, svg);    
 }
 
-function resizeSVG(svg){
-    const totalWindowHeight = window.innerHeight;
-    let h1 = document.querySelector('h1');
+function calculatePointCoordinate(pointsData, canvasParameters, pointsMeasurementsBundle) {
 
-    var styles = window.getComputedStyle(h1);
-    var margin = parseFloat(styles['marginTop']) + parseFloat(styles['marginBottom']);
-    const headerHeight = h1.offsetHeight + margin;
+    const {canvasHeight, canvasWidth, maxY, minX, minY} = canvasParameters;
+    const {pointsAmount, pointsMaxHeight, pointsMinHeight} = pointsMeasurementsBundle
+
+    const sectionLength = canvasWidth / (pointsAmount); // расстояние между точками
+    
+    var x = minX + sectionLength / 2;
+    var y = minY;
+    const z = ((canvasHeight / (pointsMaxHeight - pointsMinHeight)) == Infinity) ? 1 : 
+                                    (canvasHeight / (pointsMaxHeight - pointsMinHeight)); // приближение
+    
+    var ySubZeroCompensation = 0;
+    if (pointsMinHeight<0) {
+        ySubZeroCompensation = pointsMinHeight * z - minY;
+    }
+    
+    const pointCoordinatesBundle = [];
+
+    pointsData.forEach( (element) => {
+        
+        y = maxY - element.value * z + ySubZeroCompensation  + minY;
+
+        pointCoordinatesBundle.push({x,y})
+
+        x += sectionLength;
+    });
+
+    return pointCoordinatesBundle;
+}
+
+function calculateLineChartHeight(){
+
+    const totalWindowHeight = window.innerHeight;
+    const h1 = document.querySelector('h1');
+
+    const h1Styles = window.getComputedStyle(h1);
+    const h1TopAndBottomMargin = parseFloat(h1Styles['marginTop']) + parseFloat(h1Styles['marginBottom']);
+    const headerHeight = h1.offsetHeight + h1TopAndBottomMargin;
 
     const inputFieldHeight = document.getElementById('sourceURL').offsetHeight;
 
-    let heightForSvg = totalWindowHeight - headerHeight - inputFieldHeight;
+    const fullLineChartHieght = totalWindowHeight - headerHeight - inputFieldHeight;
     
-    svg.setAttribute('style', `height: ${heightForSvg}px; width: 100%;`);
-    svg.setAttribute('display', `flex`);
+    return fullLineChartHieght;
+}
+
+function calculateLineChartWidth() {
+    const totalWindowWidth = window.innerWidth;
+
+    return totalWindowWidth;
 }
 
 function initiateTooltip(pointsData, canvasParameters, pointsMeasurementsBundle, svg){
+
     const tooltip = document.createElement('div');
           tooltip.setAttribute('id', 'tooltip');
           tooltip.setAttribute('display', 'none');
@@ -96,17 +138,18 @@ function hideTooltip(circle) {
 
 function createPointMarkers(pointsData, canvasParameters, pointsMeasurementsBundle, svg){
     const {canvasHeight, canvasWidth, maxY, minX, minY} = canvasParameters;
+    const {pointsAmount, pointsMaxHeight, pointsMinHeight} = pointsMeasurementsBundle
 
-    let sectionLength = canvasWidth / (pointsMeasurementsBundle[0]); // расстояние между точками
+    let sectionLength = canvasWidth / (pointsAmount); // расстояние между точками
     
     let x = minX + sectionLength / 2;
     let y = minY;
-    let z = canvasHeight / (pointsMeasurementsBundle[1] - pointsMeasurementsBundle[2]); // приближение
+    let z = canvasHeight / (pointsMaxHeight - pointsMinHeight); // приближение
         z = (z == Infinity) ? 1 : z;
 
     let ySubZeroCompensation = 0;
-    if (pointsMeasurementsBundle[2]<0) {
-        ySubZeroCompensation = pointsMeasurementsBundle[2] * z - minY;
+    if (pointsMinHeight<0) {
+        ySubZeroCompensation = pointsMinHeight * z - minY;
     }
     
     let circleList = [];
@@ -126,8 +169,6 @@ function createPointMarkers(pointsData, canvasParameters, pointsMeasurementsBund
             pointCircle.setAttributeNS(null, "style", 'pointer-events: none;');
             pointCircle.setAttributeNS(null, "fill", 'none');
             pointCircle.setAttributeNS(null, "stroke", 'none');
-            // pointCircle.setAttributeNS(null, "fill", "#00A69F");
-            // pointCircle.setAttributeNS(null, "stroke", '#1246B4');
         svg.appendChild(pointCircle);
 
         circleList.push(pointCircle);
@@ -138,14 +179,15 @@ function createPointMarkers(pointsData, canvasParameters, pointsMeasurementsBund
 
 function createTargetrectaAngles(canvasParameters, pointsMeasurementsBundle, svg){
     const {canvasHeight, canvasWidth, minX, minY} = canvasParameters;
+    const {pointsAmount} = pointsMeasurementsBundle
 
-    let sectionLength = canvasWidth / (pointsMeasurementsBundle[0]);
+    let sectionLength = canvasWidth / (pointsAmount);
     let x = minX;
     let y = minY;
 
     const reactangleList = [];
 
-    for (let index = pointsMeasurementsBundle[0]; index > 0; index--) {
+    for (let index = pointsAmount; index > 0; index--) {
         let targetRectangle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             targetRectangle.setAttributeNS(null, "x", x);
             targetRectangle.setAttributeNS(null, "y", y);
@@ -163,47 +205,35 @@ function createTargetrectaAngles(canvasParameters, pointsMeasurementsBundle, svg
     return reactangleList;
 }
 
-function findDimentions(svg){
-    const svgHeight = svg.getBoundingClientRect().height;
-    const svgWidth = svg.getBoundingClientRect().width;
+function findDimentions(){
 
-    const canvasHeight = svgHeight * 0.9;
-    const canvasWidth = svgWidth * 0.9;
-    const minX = (svgWidth - canvasWidth) / 2;
+    const lineChartHieght = calculateLineChartHeight();
+    const lineChartWidth = calculateLineChartWidth();
+
+    const canvasHeight = lineChartHieght * 0.9;
+    const canvasWidth = lineChartWidth * 0.9;
+    const minX = (lineChartWidth - canvasWidth) / 2;
     const maxX = minX + canvasWidth;
-    const minY = (svgHeight - canvasHeight) / 2;
+    const minY = (lineChartHieght - canvasHeight) / 2;
     const maxY = minY + canvasHeight;
 
-    const canvasParameters = {canvasHeight, canvasWidth, maxX, maxY, minX, minY};
+    const canvasParameters = {lineChartHieght, canvasHeight, canvasWidth, maxX, maxY, minX, minY};
 
     return canvasParameters;
 }
 
-function drawMainLine(pointsData, canvasParameters, pointsMeasurementsBundle, svg){
-
-    const {canvasHeight, canvasWidth, maxY, minX, minY} = canvasParameters;
-
-    let sectionLength = canvasWidth / (pointsMeasurementsBundle[0]); // расстояние между точками
-    
-    let x = minX + sectionLength / 2;
-    let y = minY;
-    let z = canvasHeight / (pointsMeasurementsBundle[1] - pointsMeasurementsBundle[2]); // приближение
-        z = (z == Infinity) ? 1 : z;
-
-    let ySubZeroCompensation = 0;
-    if (pointsMeasurementsBundle[2]<0) {
-        ySubZeroCompensation = pointsMeasurementsBundle[2] * z - minY;
-    }
+function drawMainLine(pointCoordinatesBundle, svg) {    
 
     let d = 'M';
-    pointsData.forEach( (element) => {
-        if (element.value == null) {
+
+    pointCoordinatesBundle.forEach( (element) => {
+        if (element.y == null) {
             return;
         }
         
-        y = maxY - element.value * z + ySubZeroCompensation  + minY;
+        x = element.x;
+        y = element.y;
         d += ' ' + x + ' ' + y;
-        x += sectionLength;
     });
 
     const pathLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -236,7 +266,7 @@ function drawYTicks(canvasParameters, pointsMeasurementsBundle, svg){
     const {canvasHeight, maxY, minX} = canvasParameters;
 
     const ticksCount = 6;    
-    let tickInterval = canvasHeight / ticksCount;
+    const tickInterval = canvasHeight / ticksCount;
 
     let y = maxY;
     
@@ -267,17 +297,18 @@ function drawYTicks(canvasParameters, pointsMeasurementsBundle, svg){
     labelYTicks(ticksYCoords, canvasParameters, pointsMeasurementsBundle, svg);
 }
 
-function labelYTicks(ticksYCoords, canvasParameters, pointsMeasurementsBundle, svg){
+function labelYTicks(ticksYCoords, canvasParameters, pointsMeasurementsBundle, svg){//TODO change calc here to pointCoordinatesBundle
     const {canvasHeight, minX, minY, maxY} = canvasParameters;
+    const {pointsMaxHeight, pointsMinHeight} = pointsMeasurementsBundle
     
     const x = minX - minX / 2;
 
-    let z = canvasHeight / (pointsMeasurementsBundle[1] - pointsMeasurementsBundle[2]); // приближение
+    let z = canvasHeight / (pointsMaxHeight - pointsMinHeight); // приближение
         z = (z == Infinity) ? 1 : z;
 
     let ySubZeroCompensation = 0;
-    if (pointsMeasurementsBundle[2]<0) {
-        ySubZeroCompensation = pointsMeasurementsBundle[2] * z - minY;
+    if (pointsMinHeight<0) {
+        ySubZeroCompensation = pointsMinHeight * z - minY;
     }
 
     ticksYCoords.forEach((element) =>{
@@ -311,7 +342,7 @@ function drawYAxesArrowPoint(minX, minY, svg){
     svg.appendChild(xAxesLineArrow);
 }
 
-function drawXAxes(pointsData, canvasParameters, pointsMeasurementsBundle, svg){
+function drawXAxes(pointsData, canvasParameters, pointsAmount, svg){
     const {maxX, maxY, minX} = canvasParameters;
     
     const d = 'M ' + minX + ' ' + maxY + ' ' + maxX + ' ' + maxY;
@@ -324,7 +355,7 @@ function drawXAxes(pointsData, canvasParameters, pointsMeasurementsBundle, svg){
     svg.appendChild(xAxesLine);
 
     drawXAxesArrowPoint(maxX, maxY, svg);
-    drawXTicks(canvasParameters, pointsMeasurementsBundle, pointsData, svg);
+    drawXTicks(canvasParameters, pointsAmount, pointsData, svg);
 }
 
 function drawXAxesArrowPoint(maxX, maxY, svg){    
@@ -341,18 +372,18 @@ function drawXAxesArrowPoint(maxX, maxY, svg){
           svg.appendChild(xAxesLineArrow);
 }
 
-function drawXTicks(canvasParameters, pointsMeasurementsBundle, pointsData, svg){
+function drawXTicks(canvasParameters, pointsAmount, pointsData, svg){
 
     const {canvasWidth, maxY, minX} = canvasParameters;
 
-    let sectionLength = canvasWidth / (pointsMeasurementsBundle[0]); // расстояние между точками
+    let sectionLength = canvasWidth / (pointsAmount); // расстояние между точками
     
     let x = minX + sectionLength / 2;
 
     const ticksXCoords = [x];
 
     let d = 'M';
-    for (let index = pointsMeasurementsBundle[0]; index != 0; index--) {
+    for (let index = pointsAmount; index != 0; index--) {
         let y = maxY;
         d += ' ' + x + ' ' + y + ' V';
         y += 3;
