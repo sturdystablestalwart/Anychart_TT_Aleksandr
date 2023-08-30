@@ -29,7 +29,13 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
     svg
   );
   drawMainLine(pointCoordinatesBundle, svg);
-  manageAxes(canvasParameters, pointsMeasurementsBundle, pointsData, svg);
+  manageAxes(
+    canvasParameters,
+    pointsMeasurementsBundle,
+    pointCoordinatesBundle,
+    pointsData,
+    svg
+  );
 }
 
 function resizeChart(svg) {
@@ -98,7 +104,13 @@ function calculatePointCoordinate(
 
     y = maxY - element.value * z + ySubZeroCompensation + minY;
 
-    pointCoordinatesBundle.push({ x, y, z, ySubZeroCompensation });
+    pointCoordinatesBundle.push({
+      x,
+      y,
+      z,
+      ySubZeroCompensation,
+      sectionLength,
+    });
 
     x += sectionLength;
   });
@@ -146,13 +158,7 @@ function initiateTooltip(
   );
   document.body.insertBefore(tooltip, svg);
 
-  const circleList = createPointMarkers(
-    pointsData,
-    canvasParameters,
-    pointsMeasurementsBundle,
-    pointCoordinatesBundle,
-    svg
-  );
+  const circleList = createPointMarkers(pointCoordinatesBundle, svg);
   const reactangleList = createTargetrectaAngles(
     canvasParameters,
     pointsMeasurementsBundle,
@@ -203,13 +209,7 @@ function hideTooltip(circle) {
   circle.setAttributeNS(null, "stroke", "none");
 }
 
-function createPointMarkers(
-  pointsData,
-  canvasParameters,
-  pointsMeasurementsBundle,
-  pointCoordinatesBundle,
-  svg
-) {
+function createPointMarkers(pointCoordinatesBundle, svg) {
   let circleList = [];
 
   pointCoordinatesBundle.forEach((element) => {
@@ -249,7 +249,7 @@ function createTargetrectaAngles(
 
   const reactangleList = [];
 
-  for (let index = pointsAmount; index > 0; index--) {
+  for (var index = pointsAmount; index > 0; index--) {
     let targetRectangle = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "rect"
@@ -271,7 +271,7 @@ function createTargetrectaAngles(
 }
 
 function drawMainLine(pointCoordinatesBundle, svg) {
-  let d = "M";
+  var d = "M";
 
   pointCoordinatesBundle.forEach((element) => {
     if (element.y === null) {
@@ -299,6 +299,7 @@ function drawMainLine(pointCoordinatesBundle, svg) {
 function manageAxes(
   canvasParameters,
   pointsMeasurementsBundle,
+  pointCoordinatesBundle,
   pointsData,
   svg
 ) {
@@ -307,11 +308,26 @@ function manageAxes(
 
   drawYAxes(maxY, minX, minY, svg);
   drawYAxesArrowPoint(minX, minY, svg);
-  drawYTicks(canvasParameters, pointsMeasurementsBundle, svg);
+  const yAxesTicksCoordinates =
+    calculateYAxesTicksCoordinates(canvasParameters);
+  drawYTicks(yAxesTicksCoordinates, svg);
+  const yAxesTicksValues = calculateYAxesTicksValues(
+    yAxesTicksCoordinates,
+    pointCoordinatesBundle,
+    canvasParameters
+  );
+  labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg);
 
   drawXAxes(maxX, maxY, minX, svg);
   drawXAxesArrowPoint(maxX, maxY, svg);
-  drawXTicks(canvasParameters, pointsAmount, pointsData, svg);
+  const xAxesTicksCoordinates = calculateXAxesTicksCoordinates(
+    canvasParameters,
+    pointCoordinatesBundle,
+    pointsAmount
+  );
+  console.log(pointCoordinatesBundle, xAxesTicksCoordinates);
+  drawXTicks(xAxesTicksCoordinates, svg);
+  labelXTicks(xAxesTicksCoordinates, pointsData, svg);
 }
 
 function drawYAxes(maxY, minX, minY, svg) {
@@ -328,30 +344,37 @@ function drawYAxes(maxY, minX, minY, svg) {
   svg.appendChild(xAxesLine);
 }
 
-function drawYTicks(canvasParameters, pointsMeasurementsBundle, svg) {
+function calculateYAxesTicksCoordinates(canvasParameters) {
   const { canvasHeight, maxY, minX } = canvasParameters;
 
   const ticksCount = 6;
   const tickInterval = canvasHeight / ticksCount;
 
-  let y = maxY;
+  var y = maxY;
+  var x = minX;
 
-  let d = "M";
+  const ticksCoords = [];
 
-  const ticksYCoords = [y];
+  for (var index = 0; index < ticksCount; index++) {
+    ticksCoords.push({ x, y, tickInterval });
+    y -= tickInterval;
+  }
+  return ticksCoords;
+}
 
-  for (let index = 0; index < ticksCount; index++) {
-    let x = minX;
+function drawYTicks(yAxesTicksCoordinates, svg) {
+  var d = "M";
+
+  yAxesTicksCoordinates.forEach((element) => {
+    x = element.x;
+    y = element.y;
     d += " " + x + " " + y + " H";
     x -= 3;
     d += " " + x + " M";
-    y -= tickInterval;
-
-    ticksYCoords.push(y);
-  }
+    y -= element.tickInterval;
+  });
 
   d = d.slice(0, -2);
-  ticksYCoords.pop();
 
   const yAxesLineTicks = document.createElementNS(
     "http://www.w3.org/2000/svg",
@@ -362,34 +385,36 @@ function drawYTicks(canvasParameters, pointsMeasurementsBundle, svg) {
   yAxesLineTicks.setAttributeNS(null, "stroke", "#696969");
   yAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
   svg.appendChild(yAxesLineTicks);
-
-  labelYTicks(ticksYCoords, canvasParameters, pointsMeasurementsBundle, svg);
 }
 
-function labelYTicks(
-  ticksYCoords,
-  canvasParameters,
-  pointsMeasurementsBundle,
-  svg
+function calculateYAxesTicksValues(
+  yAxesTicksCoordinates,
+  pointCoordinatesBundle,
+  canvasParameters
 ) {
-  //TODO change calc here to pointCoordinatesBundle
-  const { canvasHeight, minX, minY, maxY } = canvasParameters;
-  const { pointsMaxHeight, pointsMinHeight } = pointsMeasurementsBundle;
+  const { minY, maxY } = canvasParameters;
 
-  const x = minX - minX / 2;
+  const z = pointCoordinatesBundle[0].z;
+  const ySubZeroCompensation = pointCoordinatesBundle[0].ySubZeroCompensation;
 
-  let z = canvasHeight / (pointsMaxHeight - pointsMinHeight); // приближение
-  z = z == Infinity ? 1 : z;
+  const yAxesTicksValues = [];
 
-  let ySubZeroCompensation = 0;
-  if (pointsMinHeight < 0) {
-    ySubZeroCompensation = pointsMinHeight * z - minY;
-  }
-
-  ticksYCoords.forEach((element) => {
-    const y = element;
-
+  yAxesTicksCoordinates.forEach((element) => {
+    const y = element.y;
     const text = Math.round((maxY + ySubZeroCompensation + minY - y) / z);
+
+    yAxesTicksValues.push(text);
+  });
+  return yAxesTicksValues;
+}
+
+function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
+  yAxesTicksCoordinates.forEach((element) => {
+    const y = element.y;
+    const x = element.x - element.x / 2;
+
+    const index = yAxesTicksCoordinates.indexOf(element);
+    const text = yAxesTicksValues[index];
 
     const labelYText = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -468,28 +493,36 @@ function drawXAxesArrowPoint(maxX, maxY, svg) {
   svg.appendChild(xAxesLineArrow);
 }
 
-function drawXTicks(canvasParameters, pointsAmount, pointsData, svg) {
-  const { canvasWidth, maxY, minX } = canvasParameters;
+function calculateXAxesTicksCoordinates(
+  canvasParameters,
+  pointCoordinatesBundle,
+  pointsAmount
+) {
+  const { maxY } = canvasParameters;
+  var { x, sectionLength } = pointCoordinatesBundle[0];
 
-  let sectionLength = canvasWidth / pointsAmount; // расстояние между точками
+  const ticksCoords = [];
 
-  let x = minX + sectionLength / 2;
+  for (var index = 0; index < pointsAmount; index++) {
+    var y = maxY;
+    ticksCoords.push({ x, y });
+    x += sectionLength;
+  }
 
-  const ticksXCoords = [x];
+  return ticksCoords;
+}
 
-  let d = "M";
-  for (let index = pointsAmount; index != 0; index--) {
-    let y = maxY;
+function drawXTicks(xAxesTicksCoordinates, svg) {
+  var d = "M";
+  xAxesTicksCoordinates.forEach((element) => {
+    var x = element.x;
+    var y = element.y;
     d += " " + x + " " + y + " V";
     y += 3;
     d += " " + y + " M";
-    x += sectionLength;
-
-    ticksXCoords.push(x);
-  }
+  });
 
   d = d.slice(0, -2);
-  ticksXCoords.pop();
 
   const xAxesLineTicks = document.createElementNS(
     "http://www.w3.org/2000/svg",
@@ -500,15 +533,13 @@ function drawXTicks(canvasParameters, pointsAmount, pointsData, svg) {
   xAxesLineTicks.setAttributeNS(null, "stroke", "#696969");
   xAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
   svg.appendChild(xAxesLineTicks);
-
-  labelXTicks(ticksXCoords, canvasParameters, pointsData, svg);
 }
 
-function labelXTicks(ticksXCoords, canvasParameters, pointsData, svg) {
-  ticksXCoords.forEach((element) => {
-    const index = ticksXCoords.indexOf(element);
-    const x = element;
-    const y = canvasParameters.maxY + canvasParameters.minY / 2;
+function labelXTicks(xAxesTicksCoordinates, pointsData, svg) {
+  xAxesTicksCoordinates.forEach((element) => {
+    const index = xAxesTicksCoordinates.indexOf(element);
+    const x = element.x;
+    const y = element.y + 3;
 
     const labelXText = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -517,7 +548,7 @@ function labelXTicks(ticksXCoords, canvasParameters, pointsData, svg) {
     const textNode = document.createTextNode(pointsData[index].x);
     labelXText.setAttributeNS(null, "x", x);
     labelXText.setAttributeNS(null, "y", y);
-    labelXText.setAttributeNS(null, "dominant-baseline", "middle");
+    labelXText.setAttributeNS(null, "dominant-baseline", "hanging");
     labelXText.setAttributeNS(null, "text-anchor", "middle");
     labelXText.setAttributeNS(null, "fill", "#696969");
     labelXText.appendChild(textNode);

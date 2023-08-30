@@ -30,14 +30,9 @@ function handleButtonClick(event) {
 function loadJson(sourceUrl) {
   fetch(sourceUrl)
     .then((response) => response.json())
-    .then((responseJson) => {
-      const pointsData = responseJson.data;
+    .then((responseJson) => responseJson.data)
+    .then((pointsData) => {
       pointsMeasurementsBundleCalculation(pointsData);
-    })
-    .catch((error) => {
-      console.log(
-        "Error occurred while trying to load Json from the server:\n" + error
-      );
     });
 }
 
