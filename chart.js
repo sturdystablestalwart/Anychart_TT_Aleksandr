@@ -231,6 +231,7 @@ function createTargetrectaAngles(
   pointsMeasurementsBundle,
   svg
 ) {
+  //TODO change logick to remove any sort of calculus for positions
   const { canvasHeight, canvasWidth, minX, minY } = canvasParameters;
   const { pointsAmount } = pointsMeasurementsBundle;
 
