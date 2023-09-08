@@ -21,19 +21,19 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
     }
   }
 
-  initiateTooltip(
-    pointsData,
-    canvasParameters,
-    pointsMeasurementsBundle,
-    pointCoordinatesBundle,
-    svg
-  );
   drawMainLine(pointCoordinatesBundle, svg);
   manageAxes(
     canvasParameters,
     pointsMeasurementsBundle,
     pointCoordinatesBundle,
     pointsData,
+    svg
+  );
+  initiateTooltip(
+    pointsData,
+    canvasParameters,
+    pointsMeasurementsBundle,
+    pointCoordinatesBundle,
     svg
   );
 }
@@ -158,25 +158,23 @@ function initiateTooltip(
   );
   document.body.insertBefore(tooltip, svg);
 
-  const circleList = createPointMarkers(pointCoordinatesBundle, svg);
-  const reactangleList = createTargetrectaAngles(
-    canvasParameters,
-    pointsMeasurementsBundle,
-    svg
-  );
+  createPointMarkers(pointCoordinatesBundle, svg);
+  createTargetrectaAngles(canvasParameters, pointsMeasurementsBundle, svg);
+  const circleList = Array.from(document.querySelectorAll("svg > circle"));
+  const rectangleList = Array.from(document.querySelectorAll("svg > rect"));
 
-  reactangleList.forEach((element) => {
+  rectangleList.forEach((element) => {
     element.addEventListener("mousemove", (event) => {
-      let index = reactangleList.indexOf(element);
+      let index = rectangleList.indexOf(element);
       let circle = circleList[index];
       let x = pointsData[index].x;
-      let value = pointsData[reactangleList.indexOf(element)].value;
+      let value = pointsData[rectangleList.indexOf(element)].value;
       let text = `Name: ${x}, Value: ${value}`;
 
       showTooltip(event, text, circle);
     });
     element.addEventListener("mouseout", () => {
-      let index = reactangleList.indexOf(element);
+      let index = rectangleList.indexOf(element);
       let circle = circleList[index];
 
       hideTooltip(circle);
@@ -210,29 +208,22 @@ function hideTooltip(circle) {
 }
 
 function createPointMarkers(pointCoordinatesBundle, svg) {
-  let circleList = [];
+  var circlesHtmlString = "";
 
   pointCoordinatesBundle.forEach((element) => {
-    if (element.value == null) {
-      return;
-    }
+    const x = element.x;
+    const y = element.y;
 
-    let pointCircle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
-    pointCircle.setAttributeNS(null, "cx", x);
-    pointCircle.setAttributeNS(null, "cy", y);
-    pointCircle.setAttributeNS(null, "r", "5px");
-    pointCircle.setAttributeNS(null, "style", "pointer-events: none;");
-    pointCircle.setAttributeNS(null, "fill", "none");
-    pointCircle.setAttributeNS(null, "stroke", "none");
-    svg.appendChild(pointCircle);
-
-    circleList.push(pointCircle);
-    x += sectionLength;
+    circlesHtmlString += `<circle
+        cx="${x}"
+        cy="${y}"
+        r="5px"
+        style="pointer-events: none;"
+        fill="none"
+        stroke="none"
+      ></circle>`;
   });
-  return circleList;
+  svg.innerHTML += circlesHtmlString;
 }
 
 function createTargetrectaAngles(
@@ -247,27 +238,21 @@ function createTargetrectaAngles(
   let x = minX;
   let y = minY;
 
-  const reactangleList = [];
+  var rectanglesHtmlString = "";
 
   for (var index = pointsAmount; index > 0; index--) {
-    let targetRectangle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "rect"
-    );
-    targetRectangle.setAttributeNS(null, "x", x);
-    targetRectangle.setAttributeNS(null, "y", y);
-    targetRectangle.setAttributeNS(null, "width", sectionLength);
-    targetRectangle.setAttributeNS(null, "height", canvasHeight);
-    targetRectangle.setAttributeNS(null, "style", "pointer-events: all;");
-    targetRectangle.setAttributeNS(null, "fill", "none");
-    targetRectangle.setAttributeNS(null, "stroke", "none");
-    svg.appendChild(targetRectangle);
-
-    reactangleList.push(targetRectangle);
+    rectanglesHtmlString += `<rect
+        x="${x}"
+        y="${y}"
+        width="${sectionLength}"
+        height="${canvasHeight}"
+        style="pointer-events: all;"
+        fill="none"
+        stroke="none"
+      ></rect>`;
     x += sectionLength;
   }
-
-  return reactangleList;
+  svg.innerHTML += rectanglesHtmlString;
 }
 
 function drawMainLine(pointCoordinatesBundle, svg) {
@@ -325,7 +310,6 @@ function manageAxes(
     pointCoordinatesBundle,
     pointsAmount
   );
-  console.log(pointCoordinatesBundle, xAxesTicksCoordinates);
   drawXTicks(xAxesTicksCoordinates, svg);
   labelXTicks(xAxesTicksCoordinates, pointsData, svg);
 }

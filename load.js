@@ -1,5 +1,5 @@
 // Global variables section.
-let timer;
+var timer;
 
 const button = document.getElementById("button");
 button.addEventListener("click", (event) => {
@@ -7,10 +7,10 @@ button.addEventListener("click", (event) => {
 });
 
 function handleButtonClick(event) {
-  let sourceUrl =
+  var sourceUrl =
     "https://gist.githubusercontent.com/sturdystablestalwart/" +
     "c01e34d434af129e6f7e6ddfbf097926/raw/Data_for_the_TT.json";
-  let urlFromInput = document.getElementById("sourceURL").value;
+  const urlFromInput = document.getElementById("sourceURL").value;
 
   if (event.target.value === "Read Json and watch the source") {
     if (isValidUrl(urlFromInput)) {
@@ -32,31 +32,32 @@ function loadJson(sourceUrl) {
     .then((response) => response.json())
     .then((responseJson) => responseJson.data)
     .then((pointsData) => {
-      pointsMeasurementsBundleCalculation(pointsData);
+      const pointsMeasurementsBundle = calculateзointsMeasurements(pointsData);
+      startCharting(pointsMeasurementsBundle, pointsData);
     });
 }
 
-function pointsMeasurementsBundleCalculation(pointsData) {
-  let pointsAmount = pointsData.length;
-  let pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
+function calculateзointsMeasurements(pointsData) {
+  const pointsAmount = pointsData.length;
+  const pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
     if (currentValue.value == undefined) {
       currentValue.value = null;
       return accumulator;
     }
     return accumulator > currentValue.value ? accumulator : currentValue.value;
   }, pointsData[0].value);
-  let pointsMinHeight = pointsData.reduce((accumulator, currentValue) => {
+  const pointsMinHeight = pointsData.reduce((accumulator, currentValue) => {
     if (currentValue.value == undefined) {
       return accumulator;
     }
     return accumulator < currentValue.value ? accumulator : currentValue.value;
   }, pointsData[0].value);
-  let pointsMeasurementsBundle = {
+  const pointsMeasurementsBundle = {
     pointsAmount,
     pointsMaxHeight,
     pointsMinHeight,
   };
-  startCharting(pointsMeasurementsBundle, pointsData);
+  return pointsMeasurementsBundle;
 }
 
 // Url validator.
