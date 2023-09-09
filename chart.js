@@ -159,7 +159,12 @@ function initiateTooltip(
   document.body.insertBefore(tooltip, svg);
 
   createPointMarkers(pointCoordinatesBundle, svg);
-  createTargetrectaAngles(canvasParameters, pointsMeasurementsBundle, svg);
+  createTargetrectaAngles(
+    canvasParameters,
+    pointsMeasurementsBundle,
+    pointCoordinatesBundle,
+    svg
+  );
   const circleList = Array.from(document.querySelectorAll("svg > circle"));
   const rectangleList = Array.from(document.querySelectorAll("svg > rect"));
 
@@ -229,19 +234,19 @@ function createPointMarkers(pointCoordinatesBundle, svg) {
 function createTargetrectaAngles(
   canvasParameters,
   pointsMeasurementsBundle,
+  pointCoordinatesBundle,
   svg
 ) {
-  //TODO change logick to remove any sort of calculus for positions
-  const { canvasHeight, canvasWidth, minX, minY } = canvasParameters;
+  const { canvasHeight, minX, minY } = canvasParameters;
   const { pointsAmount } = pointsMeasurementsBundle;
+  const { sectionLength } = pointCoordinatesBundle[0];
 
-  let sectionLength = canvasWidth / pointsAmount;
   let x = minX;
   let y = minY;
 
   var rectanglesHtmlString = "";
 
-  for (var index = pointsAmount; index > 0; index--) {
+  for (var index = 0; index < pointsAmount; index++) {
     rectanglesHtmlString += `<rect
         x="${x}"
         y="${y}"
