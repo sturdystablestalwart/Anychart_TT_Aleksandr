@@ -9,19 +9,13 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
 
   resizeChart(svg);
 
-  const tooltip = document.getElementById("tooltip");
-
-  if (tooltip) {
-    document.body.removeChild(tooltip);
-  }
-
   if (svg.childElementCount != 0) {
     while (svg.hasChildNodes()) {
       svg.removeChild(svg.lastChild);
     }
   }
 
-  drawMainLine(pointCoordinatesBundle, svg);
+  manageMainLineAndPointMarkers(pointCoordinatesBundle, svg);
   manageAxes(
     canvasParameters,
     pointsMeasurementsBundle,
@@ -29,7 +23,7 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
     pointsData,
     svg
   );
-  initiateTooltip(
+  manageTooltip(
     pointsData,
     canvasParameters,
     pointsMeasurementsBundle,
@@ -141,13 +135,28 @@ function calculateLineChartWidth() {
   return totalWindowWidth;
 }
 
-function initiateTooltip(
+function manageTooltip(
   pointsData,
   canvasParameters,
   pointsMeasurementsBundle,
   pointCoordinatesBundle,
   svg
 ) {
+  const tooltip = document.getElementById("tooltip");
+  if (!tooltip) {
+    initiateTooltip(svg);
+  }
+
+  createTargetrectaAngles(
+    canvasParameters,
+    pointsMeasurementsBundle,
+    pointCoordinatesBundle,
+    svg
+  );
+  initiateTooltipListeners(pointsData);
+}
+
+function initiateTooltip(svg) {
   const tooltip = document.createElement("div");
   tooltip.setAttribute("id", "tooltip");
   tooltip.setAttribute("display", "none");
@@ -157,14 +166,9 @@ function initiateTooltip(
       "background: #ffffff; border: 1px solid #696969; border-radius: 20px; padding: 5px; color: #696969"
   );
   document.body.insertBefore(tooltip, svg);
+}
 
-  createPointMarkers(pointCoordinatesBundle, svg);
-  createTargetrectaAngles(
-    canvasParameters,
-    pointsMeasurementsBundle,
-    pointCoordinatesBundle,
-    svg
-  );
+function initiateTooltipListeners(pointsData) {
   const circleList = Array.from(document.querySelectorAll("svg > circle"));
   const rectangleList = Array.from(document.querySelectorAll("svg > rect"));
 
@@ -212,25 +216,6 @@ function hideTooltip(circle) {
   circle.setAttributeNS(null, "stroke", "none");
 }
 
-function createPointMarkers(pointCoordinatesBundle, svg) {
-  var circlesHtmlString = "";
-
-  pointCoordinatesBundle.forEach((element) => {
-    const x = element.x;
-    const y = element.y;
-
-    circlesHtmlString += `<circle
-        cx="${x}"
-        cy="${y}"
-        r="5px"
-        style="pointer-events: none;"
-        fill="none"
-        stroke="none"
-      ></circle>`;
-  });
-  svg.innerHTML += circlesHtmlString;
-}
-
 function createTargetrectaAngles(
   canvasParameters,
   pointsMeasurementsBundle,
@@ -261,6 +246,11 @@ function createTargetrectaAngles(
   svg.innerHTML += rectanglesHtmlString;
 }
 
+function manageMainLineAndPointMarkers(pointCoordinatesBundle, svg) {
+  drawMainLine(pointCoordinatesBundle, svg);
+  createPointMarkers(pointCoordinatesBundle, svg);
+}
+
 function drawMainLine(pointCoordinatesBundle, svg) {
   var d = "M";
 
@@ -284,6 +274,25 @@ function drawMainLine(pointCoordinatesBundle, svg) {
   pathLine.setAttributeNS(null, "stroke", "#00A69F");
   pathLine.setAttributeNS(null, "stroke-width", 2);
   svg.appendChild(pathLine);
+}
+
+function createPointMarkers(pointCoordinatesBundle, svg) {
+  var circlesHtmlString = "";
+
+  pointCoordinatesBundle.forEach((element) => {
+    const x = element.x;
+    const y = element.y;
+
+    circlesHtmlString += `<circle
+        cx="${x}"
+        cy="${y}"
+        r="5px"
+        style="pointer-events: none;"
+        fill="none"
+        stroke="none"
+      ></circle>`;
+  });
+  svg.innerHTML += circlesHtmlString;
 }
 
 /* Axes drawing section */
