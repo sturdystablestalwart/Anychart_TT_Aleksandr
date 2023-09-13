@@ -92,11 +92,11 @@ function calculatePointCoordinate(
   const pointCoordinatesBundle = [];
 
   pointsData.forEach((element) => {
-    if (element.value == null) {
-      return;
-    }
-
     y = maxY - element.value * z + ySubZeroCompensation + minY;
+
+    if (element.value == null) {
+      y = null;
+    }
 
     pointCoordinatesBundle.push({
       x,
@@ -172,27 +172,31 @@ function initiateTooltipListeners(pointsData) {
   const circleList = Array.from(document.querySelectorAll("svg > circle"));
   const rectangleList = Array.from(document.querySelectorAll("svg > rect"));
 
-  rectangleList.forEach((element) => {
-    element.addEventListener("mousemove", (event) => {
-      let index = rectangleList.indexOf(element);
-      let circle = circleList[index];
-      let x = pointsData[index].x;
-      let value = pointsData[rectangleList.indexOf(element)].value;
-      let text = `Name: ${x}, Value: ${value}`;
+  pointsData.forEach((element, index) => {
+    const x = element.x;
+    const value = element.value;
+    const text = `Name: ${x}, Value: ${value}`;
+
+    if (element.value == undefined) {
+      circleList.splice(index, 0, undefined);
+    }
+
+    const rectangle = rectangleList[index];
+    var circle = circleList[index];
+
+    rectangle.addEventListener("mousemove", (event) => {
+      console.log(index);
 
       showTooltip(event, text, circle);
     });
-    element.addEventListener("mouseout", () => {
-      let index = rectangleList.indexOf(element);
-      let circle = circleList[index];
-
+    rectangle.addEventListener("mouseout", () => {
       hideTooltip(circle);
     });
   });
 }
 
 function showTooltip(event, text, circle) {
-  let tooltip = document.getElementById("tooltip");
+  const tooltip = document.getElementById("tooltip");
   tooltip.innerHTML = text;
   tooltip.style.display = "block";
   tooltip.style.left = event.pageX + 10 + "px";
@@ -226,8 +230,8 @@ function createTargetrectaAngles(
   const { pointsAmount } = pointsMeasurementsBundle;
   const { sectionLength } = pointCoordinatesBundle[0];
 
-  let x = minX;
-  let y = minY;
+  var x = minX;
+  const y = minY;
 
   var rectanglesHtmlString = "";
 
@@ -254,8 +258,15 @@ function manageMainLineAndPointMarkers(pointCoordinatesBundle, svg) {
 function drawMainLine(pointCoordinatesBundle, svg) {
   var d = "M";
 
-  pointCoordinatesBundle.forEach((element) => {
+  pointCoordinatesBundle.forEach((element, index) => {
     if (element.y === null) {
+      if (
+        pointCoordinatesBundle[index - 1] == undefined ||
+        pointCoordinatesBundle[index + 1] == undefined
+      ) {
+        return;
+      }
+      d += " " + "M";
       return;
     }
 
@@ -280,6 +291,9 @@ function createPointMarkers(pointCoordinatesBundle, svg) {
   var circlesHtmlString = "";
 
   pointCoordinatesBundle.forEach((element) => {
+    if (element.y === null) {
+      return;
+    }
     const x = element.x;
     const y = element.y;
 
@@ -308,6 +322,7 @@ function manageAxes(
 
   drawYAxes(maxY, minX, minY, svg);
   drawYAxesArrowPoint(minX, minY, svg);
+
   const yAxesTicksCoordinates =
     calculateYAxesTicksCoordinates(canvasParameters);
   drawYTicks(yAxesTicksCoordinates, svg);
@@ -320,6 +335,7 @@ function manageAxes(
 
   drawXAxes(maxX, maxY, minX, svg);
   drawXAxesArrowPoint(maxX, maxY, svg);
+
   const xAxesTicksCoordinates = calculateXAxesTicksCoordinates(
     canvasParameters,
     pointCoordinatesBundle,
@@ -408,26 +424,22 @@ function calculateYAxesTicksValues(
 }
 
 function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
-  yAxesTicksCoordinates.forEach((element) => {
+  var textNodeString = "";
+  yAxesTicksCoordinates.forEach((element, index) => {
     const y = element.y;
     const x = element.x - element.x / 2;
 
-    const index = yAxesTicksCoordinates.indexOf(element);
     const text = yAxesTicksValues[index];
 
-    const labelYText = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "text"
-    );
-    const textNode = document.createTextNode(text);
-    labelYText.setAttributeNS(null, "x", x);
-    labelYText.setAttributeNS(null, "y", y);
-    labelYText.setAttributeNS(null, "dominant-baseline", "middle");
-    labelYText.setAttributeNS(null, "text-anchor", "middle");
-    labelYText.setAttributeNS(null, "fill", "#696969");
-    labelYText.appendChild(textNode);
-    svg.appendChild(labelYText);
+    textNodeString += `<text 
+    x="${x}" 
+    y="${y}" 
+    dominant-baseline="hanging" 
+    text-anchor="middle" 
+    fill="#696969"
+    >${text}</text>`;
   });
+  svg.innerHTML += textNodeString;
 }
 
 function drawYAxesArrowPoint(minX, minY, svg) {
@@ -535,22 +547,18 @@ function drawXTicks(xAxesTicksCoordinates, svg) {
 }
 
 function labelXTicks(xAxesTicksCoordinates, pointsData, svg) {
-  xAxesTicksCoordinates.forEach((element) => {
-    const index = xAxesTicksCoordinates.indexOf(element);
+  var textNodeString = "";
+  xAxesTicksCoordinates.forEach((element, index) => {
     const x = element.x;
     const y = element.y + 3;
 
-    const labelXText = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "text"
-    );
-    const textNode = document.createTextNode(pointsData[index].x);
-    labelXText.setAttributeNS(null, "x", x);
-    labelXText.setAttributeNS(null, "y", y);
-    labelXText.setAttributeNS(null, "dominant-baseline", "hanging");
-    labelXText.setAttributeNS(null, "text-anchor", "middle");
-    labelXText.setAttributeNS(null, "fill", "#696969");
-    labelXText.appendChild(textNode);
-    svg.appendChild(labelXText);
+    textNodeString += `<text 
+    x="${x}" 
+    y="${y}" 
+    dominant-baseline="hanging" 
+    text-anchor="middle" 
+    fill="#696969"
+    >${pointsData[index].x}</text>`;
   });
+  svg.innerHTML += textNodeString;
 }
