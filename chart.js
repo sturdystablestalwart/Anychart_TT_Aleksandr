@@ -9,12 +9,6 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
 
   resizeChart(svg);
 
-  // if (svg.childElementCount != 0) {
-  //   while (svg.hasChildNodes()) {
-  //     svg.removeChild(svg.lastChild);
-  //   }
-  // }
-
   manageMainLineAndPointMarkers(pointCoordinatesBundle, svg);
   manageAxes(
     canvasParameters,
@@ -142,8 +136,8 @@ function manageTooltip(
   pointCoordinatesBundle,
   svg
 ) {
-  const tooltip = document.getElementById("tooltip");
-  if (!tooltip) {
+  const tooltip = document.querySelector("#tooltip");
+  if (tooltip == undefined) {
     initiateTooltip(svg);
   }
 
@@ -224,6 +218,8 @@ function createTargetrectaAngles(
   pointCoordinatesBundle,
   svg
 ) {
+  const targetrectaAngles = document.querySelectorAll("#targetrectaAngle");
+
   const { canvasHeight, minX, minY } = canvasParameters;
   const { pointsAmount } = pointsMeasurementsBundle;
   const { sectionLength } = pointCoordinatesBundle[0];
@@ -233,19 +229,78 @@ function createTargetrectaAngles(
 
   var rectanglesHtmlString = "";
 
-  for (var index = 0; index < pointsAmount; index++) {
-    rectanglesHtmlString += `<rect
-        x="${x}"
-        y="${y}"
-        width="${sectionLength}"
-        height="${canvasHeight}"
-        style="pointer-events: all;"
-        fill="none"
-        stroke="none"
-      ></rect>`;
-    x += sectionLength;
+  if (pointsAmount > targetrectaAngles.length) {
+    if (targetrectaAngles.length == 0) {
+      for (var index = 0; index < pointsAmount; index++) {
+        rectanglesHtmlString += `<rect
+            id="targetrectaAngle"
+            x="${x}"
+            y="${y}"
+            width="${sectionLength}"
+            height="${canvasHeight}"
+            style="pointer-events: all;"
+            fill="none"
+            stroke="none"
+          ></rect>`;
+        x += sectionLength;
+      }
+      svg.innerHTML += rectanglesHtmlString;
+    } else {
+      for (let index = 0; index < targetrectaAngles.length; index++) {
+        const element = targetrectaAngles[index];
+        element.setAttributeNS(null, "x", x);
+        element.setAttributeNS(null, "y", y);
+        element.setAttributeNS(null, "width", sectionLength);
+        element.setAttributeNS(null, "heigh", canvasHeight);
+        element.removeAttributeNS(null, "display");
+
+        x += sectionLength;
+      }
+      for (
+        let index = targetrectaAngles.length;
+        index < pointsAmount;
+        index++
+      ) {
+        rectanglesHtmlString += `<rect
+            id="targetrectaAngle"
+            x="${x}"
+            y="${y}"
+            width="${sectionLength}"
+            height="${canvasHeight}"
+            style="pointer-events: all;"
+            fill="none"
+            stroke="none"
+          ></rect>`;
+        x += sectionLength;
+      }
+      svg.innerHTML += rectanglesHtmlString;
+    }
+  } else if (pointsAmount == targetrectaAngles.length) {
+    targetrectaAngles.forEach((element) => {
+      element.setAttributeNS(null, "x", x);
+      element.setAttributeNS(null, "y", y);
+      element.setAttributeNS(null, "width", sectionLength);
+      element.setAttributeNS(null, "heigh", canvasHeight);
+      element.removeAttributeNS(null, "display");
+
+      x += sectionLength;
+    });
+  } else if (pointsAmount < targetrectaAngles.length) {
+    for (let index = 0; index < pointsAmount; index++) {
+      const element = targetrectaAngles[index];
+      element.setAttributeNS(null, "x", x);
+      element.setAttributeNS(null, "y", y);
+      element.setAttributeNS(null, "width", sectionLength);
+      element.setAttributeNS(null, "heigh", canvasHeight);
+      element.removeAttributeNS(null, "display");
+
+      x += sectionLength;
+    }
+    for (let index = pointsAmount; index < targetrectaAngles.length; index++) {
+      const element = targetrectaAngles[index];
+      element.setAttributeNS(null, "style", "pointer-events: none");
+    }
   }
-  svg.innerHTML += rectanglesHtmlString;
 }
 
 function manageMainLineAndPointMarkers(pointCoordinatesBundle, svg) {
@@ -430,17 +485,25 @@ function manageAxes(
 }
 
 function drawYAxes(maxY, minX, minY, svg) {
+  const yAxis = document.querySelector("#yAxis");
+
   const d = "M " + minX + " " + maxY + " " + minX + " " + minY;
 
-  const xAxesLine = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  xAxesLine.setAttributeNS(null, "d", d);
-  xAxesLine.setAttributeNS(null, "fill", "none");
-  xAxesLine.setAttributeNS(null, "stroke", "#696969");
-  xAxesLine.setAttributeNS(null, "stroke-width", 1);
-  svg.appendChild(xAxesLine);
+  if (yAxis == undefined) {
+    const yAxisLine = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    yAxisLine.setAttributeNS(null, "id", "yAxis");
+    yAxisLine.setAttributeNS(null, "d", d);
+    yAxisLine.setAttributeNS(null, "fill", "none");
+    yAxisLine.setAttributeNS(null, "stroke", "#696969");
+    yAxisLine.setAttributeNS(null, "stroke-width", 1);
+    svg.appendChild(yAxisLine);
+  } else {
+    const yAxisLine = yAxis;
+    yAxisLine.setAttributeNS(null, "d", d);
+  }
 }
 
 function calculateYAxesTicksCoordinates(canvasParameters) {
@@ -462,6 +525,8 @@ function calculateYAxesTicksCoordinates(canvasParameters) {
 }
 
 function drawYTicks(yAxesTicksCoordinates, svg) {
+  const yAxisTicks = document.querySelector("#yAxisTicks");
+
   var d = "M";
 
   yAxesTicksCoordinates.forEach((element) => {
@@ -472,18 +537,23 @@ function drawYTicks(yAxesTicksCoordinates, svg) {
     d += " " + x + " M";
     y -= element.tickInterval;
   });
-
   d = d.slice(0, -2);
 
-  const yAxesLineTicks = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  yAxesLineTicks.setAttributeNS(null, "d", d);
-  yAxesLineTicks.setAttributeNS(null, "fill", "none");
-  yAxesLineTicks.setAttributeNS(null, "stroke", "#696969");
-  yAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
-  svg.appendChild(yAxesLineTicks);
+  if (yAxisTicks == undefined) {
+    const yAxesLineTicks = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    yAxesLineTicks.setAttributeNS(null, "id", "yAxisTicks");
+    yAxesLineTicks.setAttributeNS(null, "d", d);
+    yAxesLineTicks.setAttributeNS(null, "fill", "none");
+    yAxesLineTicks.setAttributeNS(null, "stroke", "#696969");
+    yAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
+    svg.appendChild(yAxesLineTicks);
+  } else {
+    const yAxesLineTicks = yAxisTicks;
+    yAxesLineTicks.setAttributeNS(null, "d", d);
+  }
 }
 
 function calculateYAxesTicksValues(
@@ -508,25 +578,45 @@ function calculateYAxesTicksValues(
 }
 
 function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
+  const yAxisTickLabels = Array.from(
+    document.querySelectorAll("#yAxisTickLabel")
+  );
   var textNodeString = "";
-  yAxesTicksCoordinates.forEach((element, index) => {
-    const y = element.y;
-    const x = element.x - element.x / 2;
 
-    const text = yAxesTicksValues[index];
+  if (yAxisTickLabels.length == 0) {
+    yAxesTicksCoordinates.forEach((element, index) => {
+      const y = element.y;
+      const x = element.x - element.x / 2;
 
-    textNodeString += `<text 
-    x="${x}" 
-    y="${y}" 
-    dominant-baseline="hanging" 
-    text-anchor="middle" 
-    fill="#696969"
-    >${text}</text>`;
-  });
-  svg.innerHTML += textNodeString;
+      const text = yAxesTicksValues[index];
+
+      textNodeString += `<text 
+      id="yAxisTickLabel"
+      x="${x}" 
+      y="${y}" 
+      dominant-baseline="hanging" 
+      text-anchor="middle" 
+      fill="#696969"
+      >${text}</text>`;
+    });
+    svg.innerHTML += textNodeString;
+  } else {
+    yAxisTickLabels.forEach((element, index) => {
+      const yAxesTicksCoordinate = yAxesTicksCoordinates[index];
+      const y = yAxesTicksCoordinate.y;
+      const x = yAxesTicksCoordinate.x - yAxesTicksCoordinate.x / 2;
+
+      const text = yAxesTicksValues[index];
+      element.setAttributeNS(null, "x", x);
+      element.setAttributeNS(null, "y", y);
+      element.innerHTML = text;
+    });
+  }
 }
 
 function drawYAxesArrowPoint(minX, minY, svg) {
+  const yAxesArrowPoint = document.querySelector("#yAxesArrowPoint");
+
   const leftArrowWingPointCoordinates = " " + (minX - 3) + " " + (minY + 5);
   const rightArrowWingPointCoordinates = " " + (minX + 3) + " " + (minY + 5);
 
@@ -539,32 +629,47 @@ function drawYAxesArrowPoint(minX, minY, svg) {
     rightArrowWingPointCoordinates +
     " Z";
 
-  const xAxesLineArrow = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  xAxesLineArrow.setAttributeNS(null, "d", d);
-  xAxesLineArrow.setAttributeNS(null, "fill", "#696969");
-  xAxesLineArrow.setAttributeNS(null, "stroke", "#696969");
-  xAxesLineArrow.setAttributeNS(null, "stroke-width", 1);
-  svg.appendChild(xAxesLineArrow);
+  if (yAxesArrowPoint == undefined) {
+    const yAxesLineArrow = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    yAxesLineArrow.setAttributeNS(null, "id", "yAxesArrowPoint");
+    yAxesLineArrow.setAttributeNS(null, "d", d);
+    yAxesLineArrow.setAttributeNS(null, "fill", "#696969");
+    yAxesLineArrow.setAttributeNS(null, "stroke", "#696969");
+    yAxesLineArrow.setAttributeNS(null, "stroke-width", 1);
+    svg.appendChild(yAxesLineArrow);
+  } else {
+    const yAxesLineArrow = yAxesArrowPoint;
+    yAxesLineArrow.setAttributeNS(null, "d", d);
+  }
 }
 
 function drawXAxes(maxX, maxY, minX, svg) {
+  const xAxis = document.querySelector("#xAxis");
   const d = "M " + minX + " " + maxY + " " + maxX + " " + maxY;
 
-  const xAxesLine = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  xAxesLine.setAttributeNS(null, "d", d);
-  xAxesLine.setAttributeNS(null, "fill", "none");
-  xAxesLine.setAttributeNS(null, "stroke", "#696969");
-  xAxesLine.setAttributeNS(null, "stroke-width", 1);
-  svg.appendChild(xAxesLine);
+  if (xAxis == undefined) {
+    const xAxesLine = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    xAxesLine.setAttributeNS(null, "id", "xAxis");
+    xAxesLine.setAttributeNS(null, "d", d);
+    xAxesLine.setAttributeNS(null, "fill", "none");
+    xAxesLine.setAttributeNS(null, "stroke", "#696969");
+    xAxesLine.setAttributeNS(null, "stroke-width", 1);
+    svg.appendChild(xAxesLine);
+  } else {
+    const xAxesLine = xAxis;
+    xAxesLine.setAttributeNS(null, "d", d);
+  }
 }
 
 function drawXAxesArrowPoint(maxX, maxY, svg) {
+  const xAxisArrowPoint = document.querySelector("#xAxisArrowPoint");
+
   const heigherArrowWingPointCoordinates = " " + (maxX - 5) + " " + (maxY - 3);
   const lowerArrowWingPointCoordinates = " " + (maxX - 5) + " " + (maxY + 3);
 
@@ -577,15 +682,21 @@ function drawXAxesArrowPoint(maxX, maxY, svg) {
     lowerArrowWingPointCoordinates +
     " Z";
 
-  const xAxesLineArrow = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  xAxesLineArrow.setAttributeNS(null, "d", d);
-  xAxesLineArrow.setAttributeNS(null, "fill", "#696969");
-  xAxesLineArrow.setAttributeNS(null, "stroke", "#696969");
-  xAxesLineArrow.setAttributeNS(null, "stroke-width", 1);
-  svg.appendChild(xAxesLineArrow);
+  if (xAxisArrowPoint == undefined) {
+    const xAxesLineArrow = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    xAxesLineArrow.setAttributeNS(null, "id", "xAxisArrowPoint");
+    xAxesLineArrow.setAttributeNS(null, "d", d);
+    xAxesLineArrow.setAttributeNS(null, "fill", "#696969");
+    xAxesLineArrow.setAttributeNS(null, "stroke", "#696969");
+    xAxesLineArrow.setAttributeNS(null, "stroke-width", 1);
+    svg.appendChild(xAxesLineArrow);
+  } else {
+    const xAxesLineArrow = xAxisArrowPoint;
+    xAxesLineArrow.setAttributeNS(null, "d", d);
+  }
 }
 
 function calculateXAxesTicksCoordinates(
@@ -608,6 +719,8 @@ function calculateXAxesTicksCoordinates(
 }
 
 function drawXTicks(xAxesTicksCoordinates, svg) {
+  const yAxisTicks = document.querySelector("#yAxisTicks");
+
   var d = "M";
   xAxesTicksCoordinates.forEach((element) => {
     var x = element.x;
@@ -619,31 +732,110 @@ function drawXTicks(xAxesTicksCoordinates, svg) {
 
   d = d.slice(0, -2);
 
-  const xAxesLineTicks = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  xAxesLineTicks.setAttributeNS(null, "d", d);
-  xAxesLineTicks.setAttributeNS(null, "fill", "none");
-  xAxesLineTicks.setAttributeNS(null, "stroke", "#696969");
-  xAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
-  svg.appendChild(xAxesLineTicks);
+  if (yAxisTicks == undefined) {
+    const xAxesLineTicks = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    xAxesLineTicks.setAttributeNS(null, "id", "xAxisTicks");
+    xAxesLineTicks.setAttributeNS(null, "d", d);
+    xAxesLineTicks.setAttributeNS(null, "fill", "none");
+    xAxesLineTicks.setAttributeNS(null, "stroke", "#696969");
+    xAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
+    svg.appendChild(xAxesLineTicks);
+  } else {
+    const xAxesLineTicks = yAxisTicks;
+    xAxesLineTicks.setAttributeNS(null, "d", d);
+  }
 }
 
 function labelXTicks(xAxesTicksCoordinates, pointsData, svg) {
+  const xAxisTickLabels = Array.from(
+    document.querySelectorAll("#xAxisTickLabel")
+  );
   var textNodeString = "";
-  xAxesTicksCoordinates.forEach((element, index) => {
-    const x = element.x;
-    const y = element.y + 3;
 
-    textNodeString += `<text 
-    x="${x}" 
-    y="${y}" 
-    dominant-baseline="hanging" 
-    text-anchor="middle" 
-    fill="#696969"
-    >${pointsData[index].x}</text>`;
-  });
-  svg.innerHTML += textNodeString;
+  if (xAxesTicksCoordinates.length > xAxisTickLabels.length) {
+    if (xAxisTickLabels.length == 0) {
+      xAxesTicksCoordinates.forEach((element, index) => {
+        const x = element.x;
+        const y = element.y + 3;
+
+        textNodeString += `<text 
+      id="xAxisTickLabel"
+      x="${x}" 
+      y="${y}" 
+      dominant-baseline="hanging" 
+      text-anchor="middle" 
+      fill="#696969"
+      >${pointsData[index].x}</text>`;
+      });
+      svg.innerHTML += textNodeString;
+    } else {
+      for (var index = 0; index < xAxisTickLabels.length; index++) {
+        const element = xAxisTickLabels[index];
+        const xAxesTickCoordinates = xAxesTicksCoordinates[index];
+        const x = xAxesTickCoordinates.x;
+        const y = xAxesTickCoordinates.y + 3;
+
+        const text = pointsData[index].x;
+        element.setAttributeNS(null, "x", x);
+        element.setAttributeNS(null, "y", y);
+        element.removeAttributeNS(null, "display");
+        element.innerHTML = text;
+      }
+      for (
+        var index = xAxisTickLabels.length;
+        index < xAxesTicksCoordinates.length;
+        index++
+      ) {
+        const x = element.x;
+        const y = element.y + 3;
+
+        textNodeString += `<text 
+      id="xAxisTickLabel"
+      x="${x}" 
+      y="${y}" 
+      dominant-baseline="hanging" 
+      text-anchor="middle" 
+      fill="#696969"
+      >${pointsData[index].x}</text>`;
+      }
+      svg.innerHTML += textNodeString;
+    }
+  } else if (xAxesTicksCoordinates.length == xAxisTickLabels.length) {
+    xAxisTickLabels.forEach((element, index) => {
+      const xAxesTickCoordinates = xAxesTicksCoordinates[index];
+      const x = xAxesTickCoordinates.x;
+      const y = xAxesTickCoordinates.y + 3;
+
+      const text = pointsData[index].x;
+      element.setAttributeNS(null, "x", x);
+      element.setAttributeNS(null, "y", y);
+      element.removeAttributeNS(null, "display");
+      element.innerHTML = text;
+    });
+  } else if (xAxesTicksCoordinates.length < xAxisTickLabels.length) {
+    for (var index = 0; index < xAxesTicksCoordinates.length; index++) {
+      const element = xAxisTickLabels[index];
+      const xAxesTickCoordinates = xAxesTicksCoordinates[index];
+      const x = xAxesTickCoordinates.x;
+      const y = xAxesTickCoordinates.y + 3;
+
+      const text = pointsData[index].x;
+      element.setAttributeNS(null, "x", x);
+      element.setAttributeNS(null, "y", y);
+      element.removeAttributeNS(null, "display");
+      element.innerHTML = text;
+    }
+    for (
+      var index = xAxesTicksCoordinates.length;
+      index < xAxisTickLabels.length;
+      index++
+    ) {
+      const element = xAxisTickLabels[index];
+      element.setAttributeNS(null, "display", "none");
+    }
+    svg.innerHTML += textNodeString;
+  }
 }
-/* DOM Economy logick */
