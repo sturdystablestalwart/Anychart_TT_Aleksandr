@@ -9,11 +9,11 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
 
   resizeChart(svg);
 
-  if (svg.childElementCount != 0) {
-    while (svg.hasChildNodes()) {
-      svg.removeChild(svg.lastChild);
-    }
-  }
+  // if (svg.childElementCount != 0) {
+  //   while (svg.hasChildNodes()) {
+  //     svg.removeChild(svg.lastChild);
+  //   }
+  // }
 
   manageMainLineAndPointMarkers(pointCoordinatesBundle, svg);
   manageAxes(
@@ -185,8 +185,6 @@ function initiateTooltipListeners(pointsData) {
     var circle = circleList[index];
 
     rectangle.addEventListener("mousemove", (event) => {
-      console.log(index);
-
       showTooltip(event, text, circle);
     });
     rectangle.addEventListener("mouseout", () => {
@@ -258,55 +256,141 @@ function manageMainLineAndPointMarkers(pointCoordinatesBundle, svg) {
 function drawMainLine(pointCoordinatesBundle, svg) {
   var d = "M";
 
-  pointCoordinatesBundle.forEach((element, index) => {
-    if (element.y === null) {
-      if (
-        pointCoordinatesBundle[index - 1] == undefined ||
-        pointCoordinatesBundle[index + 1] == undefined
-      ) {
+  var mainLine = document.querySelector("#mainLine");
+  if (mainLine != undefined) {
+    pointCoordinatesBundle.forEach((element, index) => {
+      if (element.y === null) {
+        if (
+          pointCoordinatesBundle[index - 1] == undefined ||
+          pointCoordinatesBundle[index + 1] == undefined
+        ) {
+          return;
+        }
+        d += " " + "M";
         return;
       }
-      d += " " + "M";
-      return;
-    }
 
-    x = element.x;
-    y = element.y;
-    d += " " + x + " " + y;
-  });
+      x = element.x;
+      y = element.y;
+      d += " " + x + " " + y;
+    });
 
-  const pathLine = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  pathLine.setAttributeNS(null, "d", d);
-  pathLine.setAttributeNS(null, "fill", "none");
-  pathLine.setAttributeNS(null, "style", "pointer-events: none;");
-  pathLine.setAttributeNS(null, "stroke", "#00A69F");
-  pathLine.setAttributeNS(null, "stroke-width", 2);
-  svg.appendChild(pathLine);
+    mainLine.setAttributeNS(null, "d", d);
+  } else {
+    pointCoordinatesBundle.forEach((element, index) => {
+      if (element.y === null) {
+        if (
+          pointCoordinatesBundle[index - 1] == undefined ||
+          pointCoordinatesBundle[index + 1] == undefined
+        ) {
+          return;
+        }
+        d += " " + "M";
+        return;
+      }
+
+      x = element.x;
+      y = element.y;
+      d += " " + x + " " + y;
+    });
+
+    mainLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    mainLine.setAttributeNS(null, "id", "mainLine");
+    mainLine.setAttributeNS(null, "d", d);
+    mainLine.setAttributeNS(null, "fill", "none");
+    mainLine.setAttributeNS(null, "style", "pointer-events: none;");
+    mainLine.setAttributeNS(null, "stroke", "#00A69F");
+    mainLine.setAttributeNS(null, "stroke-width", 2);
+    svg.appendChild(mainLine);
+  }
 }
 
 function createPointMarkers(pointCoordinatesBundle, svg) {
   var circlesHtmlString = "";
 
-  pointCoordinatesBundle.forEach((element) => {
-    if (element.y === null) {
-      return;
-    }
-    const x = element.x;
-    const y = element.y;
+  const noNullpointCoordinatesBundle = pointCoordinatesBundle.filter(
+    (element) => element.y != null
+  );
+  const circleList = Array.from(document.querySelectorAll("svg > circle"));
 
-    circlesHtmlString += `<circle
-        cx="${x}"
-        cy="${y}"
-        r="5px"
-        style="pointer-events: none;"
-        fill="none"
-        stroke="none"
-      ></circle>`;
-  });
-  svg.innerHTML += circlesHtmlString;
+  if (noNullpointCoordinatesBundle.length > circleList.length) {
+    if (circleList.length == 0) {
+      noNullpointCoordinatesBundle.forEach((element) => {
+        const cx = element.x;
+        const cy = element.y;
+
+        circlesHtmlString += `<circle
+          cx="${cx}"
+          cy="${cy}"
+          r="5px"
+          style="pointer-events: none;"
+          fill="none"
+          stroke="none"
+        ></circle>`;
+      });
+      svg.innerHTML += circlesHtmlString;
+    } else {
+      for (var index = 0; index < circleList.length; index++) {
+        const element = noNullpointCoordinatesBundle[index];
+
+        const circle = circleList[index];
+        const cx = element.x;
+        const cy = element.y;
+
+        circle.setAttributeNS(null, "cx", cx);
+        circle.setAttributeNS(null, "cy", cy);
+        circle.removeAttributeNS(null, "display");
+      }
+
+      for (
+        var index = circleList.length;
+        index < noNullpointCoordinatesBundle.length;
+        index++
+      ) {
+        const element = noNullpointCoordinatesBundle[index];
+        const cx = element.x;
+        const cy = element.y;
+
+        circlesHtmlString += `<circle
+          cx="${cx}"
+          cy="${cy}"
+          r="5px"
+          style="pointer-events: none;"
+          fill="none"
+          stroke="none"
+        ></circle>`;
+      }
+      svg.innerHTML += circlesHtmlString;
+    }
+  } else if (noNullpointCoordinatesBundle.length == circleList.length) {
+    noNullpointCoordinatesBundle.forEach((element, index) => {
+      const circle = circleList[index];
+      const cx = element.x;
+      const cy = element.y;
+
+      circle.setAttributeNS(null, "cx", cx);
+      circle.setAttributeNS(null, "cy", cy);
+      circle.removeAttributeNS(null, "display");
+    });
+  } else {
+    for (var index = 0; index < noNullpointCoordinatesBundle.length; index++) {
+      const circle = circleList[index];
+      const element = noNullpointCoordinatesBundle[index];
+      const cx = element.x;
+      const cy = element.y;
+
+      circle.setAttributeNS(null, "cx", cx);
+      circle.setAttributeNS(null, "cy", cy);
+    }
+    for (
+      var index = noNullpointCoordinatesBundle.length;
+      index < circleList.length;
+      index++
+    ) {
+      const circle = circleList[index];
+      circle.setAttributeNS(null, "display", "none");
+    }
+  }
 }
 
 /* Axes drawing section */
@@ -562,3 +646,4 @@ function labelXTicks(xAxesTicksCoordinates, pointsData, svg) {
   });
   svg.innerHTML += textNodeString;
 }
+/* DOM Economy logick */
