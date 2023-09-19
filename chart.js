@@ -136,12 +136,8 @@ function manageTooltip(
   pointCoordinatesBundle,
   svg
 ) {
-  const tooltip = document.querySelector("#tooltip");
-  if (tooltip == undefined) {
-    initiateTooltip(svg);
-  }
-
-  createTargetrectaAngles(
+  initiateTooltip(svg);
+  createTargetRectangles(
     canvasParameters,
     pointsMeasurementsBundle,
     pointCoordinatesBundle,
@@ -151,74 +147,107 @@ function manageTooltip(
 }
 
 function initiateTooltip(svg) {
-  const tooltip = document.createElement("div");
-  tooltip.setAttribute("id", "tooltip");
-  tooltip.setAttribute("display", "none");
-  tooltip.setAttribute(
-    "style",
-    "position: absolute; display: none;" +
-      "background: #ffffff; border: 1px solid #696969; border-radius: 20px; padding: 5px; color: #696969"
-  );
-  document.body.insertBefore(tooltip, svg);
+  const drawenTooltip = document.querySelector("#tooltip");
+
+  if (drawenTooltip == undefined) {
+    const tooltip = document.createElement("div");
+    tooltip.setAttribute("id", "tooltip");
+    tooltip.setAttribute("display", "none");
+    tooltip.setAttribute(
+      "style",
+      "position: absolute; display: none;" +
+        "background: #ffffff; border: 1px solid #696969; border-radius: 20px; padding: 5px; color: #696969"
+    );
+    document.body.insertBefore(tooltip, svg);
+  }
 }
 
 function initiateTooltipListeners(pointsData) {
-  const circleList = Array.from(document.querySelectorAll("svg > circle"));
-  const rectangleList = Array.from(document.querySelectorAll("svg > rect"));
+  const rectangleList = Array.from(
+    document.querySelectorAll("#targetRectangle")
+  );
 
-  pointsData.forEach((element, index) => {
-    const x = element.x;
-    const value = element.value;
+  const counter = Math.min(rectangleList.length, pointsData.length);
+
+  var circleIndex = 0;
+  for (var index = 0; index < counter; index++) {
+    const element = rectangleList[index];
+    element.removeEventListener("mousemove", lightUpCircleMarker);
+    element.removeEventListener("mouseout", hideCircleMarker);
+    element.removeEventListener("mousemove", showTooltip);
+    element.removeEventListener("mouseout", hideTooltip);
+
+    const pointData = pointsData[index];
+    const x = pointData.x;
+    const value = pointData.value;
     const text = `Name: ${x}, Value: ${value}`;
 
-    if (element.value == undefined) {
-      circleList.splice(index, 0, undefined);
+    if (index > 0 && pointsData[index - 1].value == null) {
+      circleIndex--;
     }
 
-    const rectangle = rectangleList[index];
-    var circle = circleList[index];
+    if (value != null) {
+      element.setAttributeNS(null, "circleIndex", circleIndex);
+      element.addEventListener("mousemove", lightUpCircleMarker);
+      element.addEventListener("mouseout", hideCircleMarker);
+    }
 
-    rectangle.addEventListener("mousemove", (event) => {
-      showTooltip(event, text, circle);
-    });
-    rectangle.addEventListener("mouseout", () => {
-      hideTooltip(circle);
-    });
-  });
+    element.setAttributeNS(null, "tooltipText", text);
+    element.addEventListener("mousemove", showTooltip);
+    element.addEventListener("mouseout", hideTooltip);
+
+    circleIndex++;
+  }
 }
 
-function showTooltip(event, text, circle) {
-  const tooltip = document.getElementById("tooltip");
-  tooltip.innerHTML = text;
-  tooltip.style.display = "block";
-  tooltip.style.left = event.pageX + 10 + "px";
-  tooltip.style.top = event.pageY + 10 + "px";
+function lightUpCircleMarker(event) {
+  const rectangle = event.target;
 
-  if (circle == undefined) {
-    return;
-  }
+  const circleIndex = +rectangle.getAttributeNS(null, "circleIndex");
+
+  const circle = document.querySelector(
+    `circle#circlePointMarker:nth-of-type(${circleIndex + 1})`
+  );
   circle.setAttributeNS(null, "fill", "#00A69F");
   circle.setAttributeNS(null, "stroke", "#1246B4");
 }
+function hideCircleMarker(event) {
+  const rectangle = event.target;
 
-function hideTooltip(circle) {
-  var tooltip = document.getElementById("tooltip");
-  tooltip.style.display = "none";
+  const circleIndex = +rectangle.getAttributeNS(null, "circleIndex");
 
-  if (circle == undefined) {
-    return;
-  }
+  const circle = document.querySelector(
+    `circle#circlePointMarker:nth-of-type(${circleIndex + 1})`
+  );
+
   circle.setAttributeNS(null, "fill", "none");
   circle.setAttributeNS(null, "stroke", "none");
 }
 
-function createTargetrectaAngles(
+function showTooltip(event) {
+  const tooltip = document.getElementById("tooltip");
+  const rectangle = event.target;
+  const text = rectangle.getAttributeNS(null, "tooltipText");
+  tooltip.innerHTML = text;
+  tooltip.style.display = "block";
+  tooltip.style.left = event.pageX + 10 + "px";
+  tooltip.style.top = event.pageY + 10 + "px";
+}
+
+function hideTooltip(event) {
+  var tooltip = document.getElementById("tooltip");
+  tooltip.style.display = "none";
+}
+
+function createTargetRectangles(
   canvasParameters,
   pointsMeasurementsBundle,
   pointCoordinatesBundle,
   svg
 ) {
-  const targetrectaAngles = document.querySelectorAll("#targetrectaAngle");
+  const targetRectangles = Array.from(
+    document.querySelectorAll("#targetRectangle")
+  );
 
   const { canvasHeight, minX, minY } = canvasParameters;
   const { pointsAmount } = pointsMeasurementsBundle;
@@ -229,16 +258,16 @@ function createTargetrectaAngles(
 
   var rectanglesHtmlString = "";
 
-  if (pointsAmount > targetrectaAngles.length) {
-    if (targetrectaAngles.length == 0) {
+  if (pointsAmount > targetRectangles.length) {
+    if (targetRectangles.length == 0) {
       for (var index = 0; index < pointsAmount; index++) {
         rectanglesHtmlString += `<rect
-            id="targetrectaAngle"
+            id="targetRectangle"
             x="${x}"
             y="${y}"
             width="${sectionLength}"
             height="${canvasHeight}"
-            style="pointer-events: all;"
+            pointer-events="all"
             fill="none"
             stroke="none"
           ></rect>`;
@@ -246,59 +275,54 @@ function createTargetrectaAngles(
       }
       svg.innerHTML += rectanglesHtmlString;
     } else {
-      for (let index = 0; index < targetrectaAngles.length; index++) {
-        const element = targetrectaAngles[index];
+      for (var index = 0; index < targetRectangles.length; index++) {
+        const element = targetRectangles[index];
         element.setAttributeNS(null, "x", x);
         element.setAttributeNS(null, "y", y);
         element.setAttributeNS(null, "width", sectionLength);
         element.setAttributeNS(null, "heigh", canvasHeight);
-        element.removeAttributeNS(null, "display");
+        element.setAttributeNS(null, "pointer-events", "all");
 
         x += sectionLength;
       }
-      for (
-        let index = targetrectaAngles.length;
-        index < pointsAmount;
-        index++
-      ) {
+      for (var index = targetRectangles.length; index < pointsAmount; index++) {
         rectanglesHtmlString += `<rect
-            id="targetrectaAngle"
+            id="targetRectangle"
             x="${x}"
             y="${y}"
             width="${sectionLength}"
             height="${canvasHeight}"
-            style="pointer-events: all;"
-            fill="none"
+            pointer-events="all"
             stroke="none"
           ></rect>`;
         x += sectionLength;
       }
       svg.innerHTML += rectanglesHtmlString;
     }
-  } else if (pointsAmount == targetrectaAngles.length) {
-    targetrectaAngles.forEach((element) => {
+  } else if (pointsAmount == targetRectangles.length) {
+    targetRectangles.forEach((element) => {
       element.setAttributeNS(null, "x", x);
       element.setAttributeNS(null, "y", y);
       element.setAttributeNS(null, "width", sectionLength);
       element.setAttributeNS(null, "heigh", canvasHeight);
-      element.removeAttributeNS(null, "display");
+      element.setAttributeNS(null, "pointer-events", "all");
 
       x += sectionLength;
     });
-  } else if (pointsAmount < targetrectaAngles.length) {
-    for (let index = 0; index < pointsAmount; index++) {
-      const element = targetrectaAngles[index];
+  } else if (pointsAmount < targetRectangles.length) {
+    for (var index = 0; index < pointsAmount; index++) {
+      const element = targetRectangles[index];
       element.setAttributeNS(null, "x", x);
       element.setAttributeNS(null, "y", y);
       element.setAttributeNS(null, "width", sectionLength);
       element.setAttributeNS(null, "heigh", canvasHeight);
-      element.removeAttributeNS(null, "display");
+      element.setAttributeNS(null, "pointer-events", "all");
 
       x += sectionLength;
     }
-    for (let index = pointsAmount; index < targetrectaAngles.length; index++) {
-      const element = targetrectaAngles[index];
-      element.setAttributeNS(null, "style", "pointer-events: none");
+    for (var index = pointsAmount; index < targetRectangles.length; index++) {
+      const element = targetRectangles[index];
+      element.setAttributeNS(null, "pointer-events", "none");
     }
   }
 }
@@ -309,46 +333,27 @@ function manageMainLineAndPointMarkers(pointCoordinatesBundle, svg) {
 }
 
 function drawMainLine(pointCoordinatesBundle, svg) {
-  var d = "M";
-
   var mainLine = document.querySelector("#mainLine");
-  if (mainLine != undefined) {
-    pointCoordinatesBundle.forEach((element, index) => {
-      if (element.y === null) {
-        if (
-          pointCoordinatesBundle[index - 1] == undefined ||
-          pointCoordinatesBundle[index + 1] == undefined
-        ) {
-          return;
-        }
-        d += " " + "M";
+
+  var d = "M";
+  pointCoordinatesBundle.forEach((element, index) => {
+    if (element.y === null) {
+      if (
+        pointCoordinatesBundle[index - 1] == undefined ||
+        pointCoordinatesBundle[index + 1] == undefined
+      ) {
         return;
       }
+      d += " " + "M";
+      return;
+    }
 
-      x = element.x;
-      y = element.y;
-      d += " " + x + " " + y;
-    });
+    x = element.x;
+    y = element.y;
+    d += " " + x + " " + y;
+  });
 
-    mainLine.setAttributeNS(null, "d", d);
-  } else {
-    pointCoordinatesBundle.forEach((element, index) => {
-      if (element.y === null) {
-        if (
-          pointCoordinatesBundle[index - 1] == undefined ||
-          pointCoordinatesBundle[index + 1] == undefined
-        ) {
-          return;
-        }
-        d += " " + "M";
-        return;
-      }
-
-      x = element.x;
-      y = element.y;
-      d += " " + x + " " + y;
-    });
-
+  if (mainLine == undefined) {
     mainLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
     mainLine.setAttributeNS(null, "id", "mainLine");
     mainLine.setAttributeNS(null, "d", d);
@@ -357,16 +362,21 @@ function drawMainLine(pointCoordinatesBundle, svg) {
     mainLine.setAttributeNS(null, "stroke", "#00A69F");
     mainLine.setAttributeNS(null, "stroke-width", 2);
     svg.appendChild(mainLine);
+  } else {
+    mainLine.setAttributeNS(null, "d", d);
   }
 }
 
 function createPointMarkers(pointCoordinatesBundle, svg) {
+  const circleList = Array.from(
+    document.querySelectorAll("#circlePointMarker")
+  );
+
   var circlesHtmlString = "";
 
   const noNullpointCoordinatesBundle = pointCoordinatesBundle.filter(
     (element) => element.y != null
   );
-  const circleList = Array.from(document.querySelectorAll("svg > circle"));
 
   if (noNullpointCoordinatesBundle.length > circleList.length) {
     if (circleList.length == 0) {
@@ -375,6 +385,7 @@ function createPointMarkers(pointCoordinatesBundle, svg) {
         const cy = element.y;
 
         circlesHtmlString += `<circle
+          id="circlePointMarker"
           cx="${cx}"
           cy="${cy}"
           r="5px"
@@ -406,7 +417,8 @@ function createPointMarkers(pointCoordinatesBundle, svg) {
         const cx = element.x;
         const cy = element.y;
 
-        circlesHtmlString += `<circle
+        circlesHtmlString += `<circle 
+          id="circlePointMarker"
           cx="${cx}"
           cy="${cy}"
           r="5px"
@@ -448,7 +460,6 @@ function createPointMarkers(pointCoordinatesBundle, svg) {
   }
 }
 
-/* Axes drawing section */
 function manageAxes(
   canvasParameters,
   pointsMeasurementsBundle,
@@ -586,7 +597,7 @@ function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
   if (yAxisTickLabels.length == 0) {
     yAxesTicksCoordinates.forEach((element, index) => {
       const y = element.y;
-      const x = element.x - element.x / 2;
+      const x = element.x - 5;
 
       const text = yAxesTicksValues[index];
 
@@ -594,8 +605,8 @@ function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
       id="yAxisTickLabel"
       x="${x}" 
       y="${y}" 
-      dominant-baseline="hanging" 
-      text-anchor="middle" 
+      dominant-baseline="middle" 
+      text-anchor="end" 
       fill="#696969"
       >${text}</text>`;
     });
@@ -604,7 +615,7 @@ function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
     yAxisTickLabels.forEach((element, index) => {
       const yAxesTicksCoordinate = yAxesTicksCoordinates[index];
       const y = yAxesTicksCoordinate.y;
-      const x = yAxesTicksCoordinate.x - yAxesTicksCoordinate.x / 2;
+      const x = yAxesTicksCoordinate.x - 5;
 
       const text = yAxesTicksValues[index];
       element.setAttributeNS(null, "x", x);
@@ -719,7 +730,7 @@ function calculateXAxesTicksCoordinates(
 }
 
 function drawXTicks(xAxesTicksCoordinates, svg) {
-  const yAxisTicks = document.querySelector("#yAxisTicks");
+  const xAxisTicks = document.querySelector("#xAxisTicks");
 
   var d = "M";
   xAxesTicksCoordinates.forEach((element) => {
@@ -732,7 +743,7 @@ function drawXTicks(xAxesTicksCoordinates, svg) {
 
   d = d.slice(0, -2);
 
-  if (yAxisTicks == undefined) {
+  if (xAxisTicks == undefined) {
     const xAxesLineTicks = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "path"
@@ -744,7 +755,7 @@ function drawXTicks(xAxesTicksCoordinates, svg) {
     xAxesLineTicks.setAttributeNS(null, "stroke-width", 1);
     svg.appendChild(xAxesLineTicks);
   } else {
-    const xAxesLineTicks = yAxisTicks;
+    const xAxesLineTicks = xAxisTicks;
     xAxesLineTicks.setAttributeNS(null, "d", d);
   }
 }
@@ -789,6 +800,7 @@ function labelXTicks(xAxesTicksCoordinates, pointsData, svg) {
         index < xAxesTicksCoordinates.length;
         index++
       ) {
+        const element = xAxisTickLabels[index];
         const x = element.x;
         const y = element.y + 3;
 
