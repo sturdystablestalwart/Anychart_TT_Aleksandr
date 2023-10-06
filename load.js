@@ -1,11 +1,25 @@
-// Global variables section.
+/**
+ * The only global avriable
+ */
 var timer;
 
+/**
+ * Listener set-up for the button that reads the input field and starts to load the Json from a source
+ */
 const button = document.getElementById("button");
 button.addEventListener("click", (event) => {
   handleButtonClick(event);
 });
 
+/**
+ * Handler for a button press event that reads an input field
+ * if there is a valid vlue uses it to periodically load JSON from the sorce provided
+ * if there is non uses default value to periodically load JSON
+ *
+ * Changes button value to reflect current function of a  button
+ *
+ * @param {object} event
+ */
 function handleButtonClick(event) {
   var sourceUrl =
     "https://gist.githubusercontent.com/sturdystablestalwart/" +
@@ -26,18 +40,29 @@ function handleButtonClick(event) {
   }
 }
 
-// Loading section.
+/**
+ * Loads JSON from a source provided
+ *
+ * Uses fetch and calls calculatepointsMeasurements and startCharting
+ *
+ * @param {string} sourceUrl
+ */
 function loadJson(sourceUrl) {
   fetch(sourceUrl)
     .then((response) => response.json())
     .then((responseJson) => responseJson.data)
     .then((pointsData) => {
-      const pointsMeasurementsBundle = calculateзointsMeasurements(pointsData);
+      const pointsMeasurementsBundle = calculatepointsMeasurements(pointsData);
       startCharting(pointsMeasurementsBundle, pointsData);
     });
 }
-
-function calculateзointsMeasurements(pointsData) {
+/**
+ * Calculates amount of points, heighest and lowest of their values
+ *
+ * @param {object} pointsData
+ * @returns {object} {pointsAmount, pointsMaxHeight, pointsMinHeight,};
+ */
+function calculatepointsMeasurements(pointsData) {
   const pointsAmount = pointsData.length;
   const pointsMaxHeight = pointsData.reduce((accumulator, currentValue) => {
     if (currentValue.value == undefined) {
@@ -60,7 +85,12 @@ function calculateзointsMeasurements(pointsData) {
   return pointsMeasurementsBundle;
 }
 
-// Url validator.
+/**
+ * Checks the validity of URL provided
+ *
+ * @param {string} string
+ * @returns {boolean}
+ */
 function isValidUrl(string) {
   try {
     new URL(string);

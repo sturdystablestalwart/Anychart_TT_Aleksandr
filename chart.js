@@ -1,5 +1,13 @@
+/**
+ * The main function to draw the chart.
+ * It starts all the other functions.
+ *
+ * @param {array} pointsMeasurementsBundle
+ * @param {array} pointsData
+ */
 function startCharting(pointsMeasurementsBundle, pointsData) {
   const svg = document.getElementById("linechart");
+
   const canvasParameters = calculateCanvasParameters();
   const pointCoordinatesBundle = calculatePointCoordinate(
     pointsData,
@@ -26,6 +34,11 @@ function startCharting(pointsMeasurementsBundle, pointsData) {
   );
 }
 
+/**
+ * Calculates the size of svg that it can have.
+ *
+ * @param {object} svg
+ */
 function resizeChart(svg) {
   const lineChartHieght = calculateLineChartHeight();
   const lineChartWidth = calculateLineChartWidth();
@@ -36,6 +49,19 @@ function resizeChart(svg) {
   svg.setAttribute("display", `flex`);
 }
 
+/**
+ * Calculates the parameters that define the canvas
+ * canvas is the arrea for the line of the chart to go in
+ *
+ * @returns {array} an array that holds in it:
+ *
+ * the height of a canvas ,
+ * the width of a canvas,
+ * the furthest from 0 X-axis coordinate to be used in the bounds of a canvas,
+ * the furthest from 0 Y-axis coordinate to be used in the bounds of a canvas,
+ * the nearest from 0 X-axis coordinate to be used in the bounds of a canvas,
+ * the nearest from 0 Y-axis coordinate to be used in the bounds of a canvas
+ */
 function calculateCanvasParameters() {
   const lineChartHieght = calculateLineChartHeight();
   const lineChartWidth = calculateLineChartWidth();
@@ -48,7 +74,6 @@ function calculateCanvasParameters() {
   const maxY = minY + canvasHeight;
 
   const canvasParameters = {
-    lineChartHieght,
     canvasHeight,
     canvasWidth,
     maxX,
@@ -60,6 +85,16 @@ function calculateCanvasParameters() {
   return canvasParameters;
 }
 
+/**
+ * Calculates the coordinates of point inside the svg,
+ * scale used to fit all the points in the chart, compensation so no points will be displayed
+ * under the X axis, and the space between points, for every point.
+ *
+ * @param {array} pointsData
+ * @param {array} canvasParameters
+ * @param {array} pointsMeasurementsBundle
+ * @returns {array} pointCoordinatesBundle {points X, points Y, scale, sub zero compensation, space between points}
+ */
 function calculatePointCoordinate(
   pointsData,
   canvasParameters,
@@ -69,14 +104,14 @@ function calculatePointCoordinate(
   const { pointsAmount, pointsMaxHeight, pointsMinHeight } =
     pointsMeasurementsBundle;
 
-  const sectionLength = canvasWidth / pointsAmount; // расстояние между точками
+  const sectionLength = canvasWidth / pointsAmount;
 
   var x = minX + sectionLength / 2;
   var y = minY;
   const z =
     canvasHeight / (pointsMaxHeight - pointsMinHeight) == Infinity
       ? 1
-      : canvasHeight / (pointsMaxHeight - pointsMinHeight); // приближение
+      : canvasHeight / (pointsMaxHeight - pointsMinHeight);
 
   var ySubZeroCompensation = 0;
   if (pointsMinHeight < 0) {
@@ -106,6 +141,14 @@ function calculatePointCoordinate(
   return pointCoordinatesBundle;
 }
 
+/**
+ * Calculates height that the lineChart svg can have
+ *
+ * to calculate lineChart height, window.innerHeight and
+ * calculated summ of heights of other elements on the page are used
+ *
+ * @returns {number}
+ */
 function calculateLineChartHeight() {
   const totalWindowHeight = window.innerHeight;
   const h1 = document.querySelector("h1");
@@ -123,12 +166,25 @@ function calculateLineChartHeight() {
   return fullLineChartHieght;
 }
 
+/**
+ * Returns the availible for svg width
+ * @returns {number} window.innerWidth
+ */
 function calculateLineChartWidth() {
   const totalWindowWidth = window.innerWidth;
 
   return totalWindowWidth;
 }
 
+/**
+ * Manages tooltip, initiates tooltip, cretes targets, initiates listeners
+ *
+ * @param {array} pointsData
+ * @param {object} canvasParameters
+ * @param {array} pointsMeasurementsBundle
+ * @param {array} pointCoordinatesBundle
+ * @param {object} svg
+ */
 function manageTooltip(
   pointsData,
   canvasParameters,
@@ -145,7 +201,13 @@ function manageTooltip(
   );
   initiateTooltipListeners(pointsData);
 }
-
+/**
+ * Adds a tooltip to a page
+ *
+ * Does nothing if tooltip is already there
+ *
+ * @param {object} svg
+ */
 function initiateTooltip(svg) {
   const drawenTooltip = document.querySelector("#tooltip");
 
@@ -162,6 +224,19 @@ function initiateTooltip(svg) {
   }
 }
 
+/**
+ * Places 4 listeners on each of the rectangles
+ *
+ * 1st listener is to catch the event of mouse being in a
+ * proximity of a point and show a tooltip
+ * 2nd listener is to catch the event of mouse being in a
+ * proximity of a point and show a point marker
+ *
+ * 3rd listener is to catch an event of mouse leaving the proximity to hide a tooltip
+ * 4th listener is to catch an event of mouse leaving the proximity to hide a point mmarker
+ *
+ * @param {array} pointsData
+ */
 function initiateTooltipListeners(pointsData) {
   const rectangleList = Array.from(
     document.querySelectorAll("#targetRectangle")
@@ -199,7 +274,10 @@ function initiateTooltipListeners(pointsData) {
     circleIndex++;
   }
 }
-
+/**
+ * Handler for an event of mouse being in proximity(on target rectangle) of a point for showing the point marker
+ * @param {object} event
+ */
 function lightUpCircleMarker(event) {
   const rectangle = event.target;
 
@@ -211,6 +289,11 @@ function lightUpCircleMarker(event) {
   circle.setAttributeNS(null, "fill", "#00A69F");
   circle.setAttributeNS(null, "stroke", "#1246B4");
 }
+
+/**
+ * Handler for an event of mouse moved out of proximity(on target rectangle) of a point for hiding the point marker
+ * @param {object} event
+ */
 function hideCircleMarker(event) {
   const rectangle = event.target;
 
@@ -224,6 +307,10 @@ function hideCircleMarker(event) {
   circle.setAttributeNS(null, "stroke", "none");
 }
 
+/**
+ * Handler for an event of mouse being in proximity(on target rectangle) of a point for showing the tooltip
+ * @param {object} event
+ */
 function showTooltip(event) {
   const tooltip = document.getElementById("tooltip");
   const rectangle = event.target;
@@ -234,11 +321,23 @@ function showTooltip(event) {
   tooltip.style.top = event.pageY + 10 + "px";
 }
 
-function hideTooltip(event) {
+/**
+ * Handler for an event of mouse moved out of proximity(on target rectangle) of a point for hiding the tooltip
+ */
+function hideTooltip() {
   var tooltip = document.getElementById("tooltip");
   tooltip.style.display = "none";
 }
-
+/**
+ * Creates rectangles to place listeners to
+ *
+ * Accomodates for the possibility of different amounts of points for different redraws
+ *
+ * @param {object} canvasParameters
+ * @param {array} pointsMeasurementsBundle
+ * @param {array} pointCoordinatesBundle
+ * @param {object} svg
+ */
 function createTargetRectangles(
   canvasParameters,
   pointsMeasurementsBundle,
@@ -327,11 +426,28 @@ function createTargetRectangles(
   }
 }
 
+/**
+ * Manager for main line and for markers on main line.
+ * @param {array} pointCoordinatesBundle
+ * @param {object} svg
+ */
 function manageMainLineAndPointMarkers(pointCoordinatesBundle, svg) {
   drawMainLine(pointCoordinatesBundle, svg);
   createPointMarkers(pointCoordinatesBundle, svg);
 }
 
+/**
+ * (re)Draws the main line on the linchart
+ *
+ * Uses coordinates from pointCoordinatesBundle to write a string suiteble for
+ * attribute d in path tag.
+ *
+ * If an elemnt with the id mainLine already exists set current d with new value
+ * If not creates and then sets the d
+ *
+ * @param {array} pointCoordinatesBundle
+ * @param {object} svg
+ */
 function drawMainLine(pointCoordinatesBundle, svg) {
   var mainLine = document.querySelector("#mainLine");
 
@@ -367,6 +483,17 @@ function drawMainLine(pointCoordinatesBundle, svg) {
   }
 }
 
+/**
+ * (re)Draws point markers on the main line on the linchart
+ *
+ * Uses coordinates from pointCoordinatesBundle to create a suitable string to
+ * place into innerHTML of an svg
+ *
+ * Accomodates for the possibility of different amounts of points for different redraws
+ *
+ * @param {array} pointCoordinatesBundle
+ * @param {object} svg
+ */
 function createPointMarkers(pointCoordinatesBundle, svg) {
   const circleList = Array.from(
     document.querySelectorAll("#circlePointMarker")
@@ -460,6 +587,17 @@ function createPointMarkers(pointCoordinatesBundle, svg) {
   }
 }
 
+/**
+ * Axes drawing manager
+ *
+ * Starts drawing and calculating functions
+ *
+ * @param {object} canvasParameters
+ * @param {object} pointsMeasurementsBundle
+ * @param {array} pointCoordinatesBundle
+ * @param {array} pointsData
+ * @param {object} svg
+ */
 function manageAxes(
   canvasParameters,
   pointsMeasurementsBundle,
@@ -495,6 +633,16 @@ function manageAxes(
   labelXTicks(xAxesTicksCoordinates, pointsData, svg);
 }
 
+/**
+ * (re)Draws Y axis using path from (minX, maxY) to (minX, minY)
+ *
+ * Uses parameters to create a string suiteble for argument d in the path tag
+ *
+ * @param {number} maxY
+ * @param {number} minX
+ * @param {number} minY
+ * @param {number} svg
+ */
 function drawYAxes(maxY, minX, minY, svg) {
   const yAxis = document.querySelector("#yAxis");
 
@@ -517,6 +665,14 @@ function drawYAxes(maxY, minX, minY, svg) {
   }
 }
 
+/**
+ * Calculates coordinates from which to start drawing ticks on the Y axis
+ *
+ * Each element of the resulting array is an object containing x and y coordinates and an interaval between ticks
+ *
+ * @param {object} canvasParameters
+ * @returns {array} array of objects [{ x, y, tickInterval }...]
+ */
 function calculateYAxesTicksCoordinates(canvasParameters) {
   const { canvasHeight, maxY, minX } = canvasParameters;
 
@@ -535,6 +691,16 @@ function calculateYAxesTicksCoordinates(canvasParameters) {
   return ticksCoords;
 }
 
+/**
+ * (re)Draws Y axis ticks using path
+ *
+ * Uses yAxesTicksCoordinates to create a string suiteble for argument d in the path tag
+ *
+ * The length of a tick is statick and is 3px
+ *
+ * @param {array} yAxesTicksCoordinates
+ * @param {object} svg
+ */
 function drawYTicks(yAxesTicksCoordinates, svg) {
   const yAxisTicks = document.querySelector("#yAxisTicks");
 
@@ -567,6 +733,14 @@ function drawYTicks(yAxesTicksCoordinates, svg) {
   }
 }
 
+/**
+ * Calculates values that should be displayd on the chart under each tick
+ *
+ * @param {array} yAxesTicksCoordinates
+ * @param {array} pointCoordinatesBundle {points X, points Y, scale, sub zero compensation, space between points}
+ * @param {object} canvasParameters
+ * @returns {array}
+ */
 function calculateYAxesTicksValues(
   yAxesTicksCoordinates,
   pointCoordinatesBundle,
@@ -587,7 +761,19 @@ function calculateYAxesTicksValues(
   });
   return yAxesTicksValues;
 }
-
+/**
+ * (re)Draws Y axis tick labels using string by placing it in the innerHTML of svg object
+ *
+ * Uses parameters to create a string suiteble svg.innerHTML
+ *
+ * Accomodates for the possibility of a reDraw and instead of creating a new text node reuses old one
+ *
+ * The space between the tick and a ticklable is statick and is 5px
+ *
+ * @param {array} yAxesTicksCoordinates
+ * @param {array} yAxesTicksValues
+ * @param {object} svg
+ */
 function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
   const yAxisTickLabels = Array.from(
     document.querySelectorAll("#yAxisTickLabel")
@@ -624,7 +810,15 @@ function labelYTicks(yAxesTicksCoordinates, yAxesTicksValues, svg) {
     });
   }
 }
-
+/**
+ * (re)Draws Y axis arrowpoint using path
+ *
+ * Uses parameters to create a string suiteble for argument d in the path tag
+ *
+ * @param {number} minX
+ * @param {number} minY
+ * @param {object} svg
+ */
 function drawYAxesArrowPoint(minX, minY, svg) {
   const yAxesArrowPoint = document.querySelector("#yAxesArrowPoint");
 
@@ -657,6 +851,16 @@ function drawYAxesArrowPoint(minX, minY, svg) {
   }
 }
 
+/**
+ * (re)Draws Y axis using path from (minX, maxY) to (maxX, maxY)
+ *
+ * Uses parameters to create a string suiteble for argument d in the path tag
+ *
+ * @param {number} maxX
+ * @param {number} maxY
+ * @param {number} minX
+ * @param {object} svg
+ */
 function drawXAxes(maxX, maxY, minX, svg) {
   const xAxis = document.querySelector("#xAxis");
   const d = "M " + minX + " " + maxY + " " + maxX + " " + maxY;
@@ -677,7 +881,15 @@ function drawXAxes(maxX, maxY, minX, svg) {
     xAxesLine.setAttributeNS(null, "d", d);
   }
 }
-
+/**
+ * (re)Draws X axis arrowpoint using path
+ *
+ * Uses parameters to create a string suiteble for argument d in the path tag
+ *
+ * @param {number} maxX
+ * @param {number} maxY
+ * @param {object} svg
+ */
 function drawXAxesArrowPoint(maxX, maxY, svg) {
   const xAxisArrowPoint = document.querySelector("#xAxisArrowPoint");
 
@@ -710,6 +922,14 @@ function drawXAxesArrowPoint(maxX, maxY, svg) {
   }
 }
 
+/**
+ * Calculates values that should be displayd on the chart under each tick
+ *
+ * @param {object} canvasParameters
+ * @param {array} pointCoordinatesBundle
+ * @param {number} pointsAmount
+ * @returns {array}
+ */
 function calculateXAxesTicksCoordinates(
   canvasParameters,
   pointCoordinatesBundle,
@@ -729,6 +949,16 @@ function calculateXAxesTicksCoordinates(
   return ticksCoords;
 }
 
+/**
+ * (re)Draws X axis ticks using path
+ *
+ * Uses xAxesTicksCoordinates to create a string suiteble for argument d in the path tag
+ *
+ * The length of a tick is statick and is 3px
+ *
+ * @param {array} xAxesTicksCoordinates
+ * @param {object} svg
+ */
 function drawXTicks(xAxesTicksCoordinates, svg) {
   const xAxisTicks = document.querySelector("#xAxisTicks");
 
@@ -760,6 +990,20 @@ function drawXTicks(xAxesTicksCoordinates, svg) {
   }
 }
 
+/**
+ * (re)Draws X axis tick labels using string by placing it in the innerHTML of svg object
+ *
+ * Uses parameters to create a string suiteble svg.innerHTML
+ *
+ * Accomodates for the possibility of a reDraw and instead of creating a new text node reuses old one
+ * If there are too many nodes, uses as many as needed and "display: none"s the rest
+ *
+ * The space between the tick and a ticklable is statick and is 3px
+ *
+ * @param {array} xAxesTicksCoordinates
+ * @param {array} pointsData
+ * @param {object} svg
+ */
 function labelXTicks(xAxesTicksCoordinates, pointsData, svg) {
   const xAxisTickLabels = Array.from(
     document.querySelectorAll("#xAxisTickLabel")
